@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next'
+import path from 'path'
 
 const nextConfig: NextConfig = {
   images: {
@@ -9,6 +10,10 @@ const nextConfig: NextConfig = {
     ],
   },
   transpilePackages: ['shared'],
+  webpack(config) {
+    config.resolve.alias['shared'] = path.resolve(__dirname, '../../packages/shared/src/index.ts')
+    return config
+  },
 }
 
 export default nextConfig
