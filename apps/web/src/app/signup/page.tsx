@@ -1,0 +1,166 @@
+'use client'
+
+import Link from 'next/link'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { BOROUGHS, NEIGHBORHOODS } from 'shared'
+
+export default function SignupPage() {
+  const router = useRouter()
+  const [step, setStep] = useState<1 | 2>(1)
+  const [loading, setLoading] = useState(false)
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    borough: '',
+    neighborhood: '',
+    languages: [] as string[],
+  })
+
+  const neighborhoods = form.borough
+    ? NEIGHBORHOODS[form.borough as keyof typeof NEIGHBORHOODS] ?? []
+    : []
+
+  function update(field: string, value: string) {
+    setForm(prev => ({ ...prev, [field]: value }))
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (step === 1) { setStep(2); return }
+    setLoading(true)
+    await new Promise(r => setTimeout(r, 1000))
+    router.push('/app')
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-clutch-50 via-white to-purple-50 flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <Link href="/" className="text-3xl font-bold text-gradient">Clutch</Link>
+          <p className="text-gray-500 mt-2">Join your neighborhood network.</p>
+        </div>
+
+        {/* Progress */}
+        <div className="flex gap-2 mb-6">
+          {[1, 2].map(s => (
+            <div
+              key={s}
+              className={`h-1.5 flex-1 rounded-full transition-colors ${
+                s <= step ? 'gradient-brand' : 'bg-gray-200'
+              }`}
+            />
+          ))}
+        </div>
+
+        <div className="card p-8">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {step === 1 && (
+              <>
+                <h2 className="text-lg font-semibold text-gray-900 mb-1">Create your account</h2>
+                <div>
+                  <label htmlFor="name" className="label">Full name</label>
+                  <input
+                    id="name"
+                    type="text"
+                    className="input"
+                    placeholder="Your name"
+                    value={form.name}
+                    onChange={e => update('name', e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="email" className="label">Email address</label>
+                  <input
+                    id="email"
+                    type="email"
+                    className="input"
+                    placeholder="you@example.com"
+                    value={form.email}
+                    onChange={e => update('email', e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <label htmlFor="password" className="label">Password</label>
+                  <input
+                    id="password"
+                    type="password"
+                    className="input"
+                    placeholder="Min 8 characters"
+                    value={form.password}
+                    onChange={e => update('password', e.target.value)}
+                    minLength={8}
+                    required
+                  />
+                </div>
+              </>
+            )}
+
+            {step === 2 && (
+              <>
+                <h2 className="text-lg font-semibold text-gray-900 mb-1">Where are you based?</h2>
+                <p className="text-sm text-gray-500 -mt-3 mb-2">
+                  This helps us show you nearby tasks. You get <span className="font-semibold text-clutch-600">20 free credits</span> to start!
+                </p>
+                <div>
+                  <label htmlFor="borough" className="label">Borough</label>
+                  <select
+                    id="borough"
+                    className="input"
+                    value={form.borough}
+                    onChange={e => update('borough', e.target.value)}
+                    required
+                  >
+                    <option value="">Select borough...</option>
+                    {BOROUGHS.map(b => <option key={b} value={b}>{b}</option>)}
+                  </select>
+                </div>
+                {neighborhoods.length > 0 && (
+                  <div>
+                    <label htmlFor="neighborhood" className="label">Neighborhood</label>
+                    <select
+                      id="neighborhood"
+                      className="input"
+                      value={form.neighborhood}
+                      onChange={e => update('neighborhood', e.target.value)}
+                      required
+                    >
+                      <option value="">Select neighborhood...</option>
+                      {neighborhoods.map(n => <option key={n} value={n}>{n}</option>)}
+                    </select>
+                  </div>
+                )}
+                <div className="bg-clutch-50 rounded-xl p-4 text-sm text-clutch-700">
+                  <span className="font-semibold">◈ 20 free credits</span> will be added to your account — use them to post your first task!
+                </div>
+              </>
+            )}
+
+            <button
+              type="submit"
+              className="btn-primary w-full flex justify-center items-center gap-2"
+              disabled={loading}
+            >
+              {loading
+                ? <><span className="animate-spin">◌</span> Creating account...</>
+                : step === 1 ? 'Continue →' : 'Join Clutch →'
+              }
+            </button>
+          </form>
+
+          <div className="mt-6 text-center text-sm text-gray-500">
+            Already have an account?{' '}
+            <Link href="/login" className="text-clutch-600 font-medium hover:underline">Sign in</Link>
+          </div>
+        </div>
+
+        <p className="text-center text-xs text-gray-400 mt-4">
+          By signing up, you agree to keep your community safe and treat all neighbors with respect.
+        </p>
+      </div>
+    </div>
+  )
+}

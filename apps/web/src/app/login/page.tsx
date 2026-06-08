@@ -1,0 +1,91 @@
+'use client'
+
+import Link from 'next/link'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+
+export default function LoginPage() {
+  const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    // Demo: skip actual auth and go straight to app
+    await new Promise(r => setTimeout(r, 800))
+    router.push('/app')
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-clutch-50 via-white to-purple-50 flex items-center justify-center px-4">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <Link href="/" className="text-3xl font-bold text-gradient">Clutch</Link>
+          <p className="text-gray-500 mt-2">Welcome back, neighbor.</p>
+        </div>
+
+        <div className="card p-8">
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label htmlFor="email" className="label">Email address</label>
+              <input
+                id="email"
+                type="email"
+                className="input"
+                placeholder="you@example.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="label">Password</label>
+              <input
+                id="password"
+                type="password"
+                className="input"
+                placeholder="••••••••"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="btn-primary w-full justify-center flex items-center gap-2"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <span className="animate-spin">◌</span> Signing in...
+                </>
+              ) : 'Sign in'}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center text-sm text-gray-500">
+            Don&apos;t have an account?{' '}
+            <Link href="/signup" className="text-clutch-600 font-medium hover:underline">
+              Sign up free
+            </Link>
+          </div>
+
+          {/* Demo shortcut */}
+          <div className="mt-4 pt-4 border-t border-gray-100 text-center">
+            <button
+              onClick={() => router.push('/app')}
+              className="text-xs text-gray-400 hover:text-clutch-500 transition-colors"
+            >
+              Demo mode: skip login →
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
