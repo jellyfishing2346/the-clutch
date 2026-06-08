@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "Clutch",
+    "slug": "clutch",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "clutch",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#6355f5"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.clutch.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Clutch uses your location to show nearby tasks."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#6355f5"
+      },
+      "package": "com.clutch.app",
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-location"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
