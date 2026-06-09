@@ -4,18 +4,22 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { BOROUGHS, NEIGHBORHOODS } from 'shared'
+import { createClient } from '@/lib/supabase/client'
+
+const IS_DEMO = !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  process.env.NEXT_PUBLIC_SUPABASE_URL.includes('your-project')
 
 export default function SignupPage() {
   const router = useRouter()
   const [step, setStep] = useState<1 | 2>(1)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
   const [form, setForm] = useState({
     name: '',
     email: '',
     password: '',
     borough: '',
     neighborhood: '',
-    languages: [] as string[],
   })
 
   const neighborhoods = form.borough
@@ -28,10 +32,41 @@ export default function SignupPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (step === 1) { setStep(2); return }
+    setError('')
+
+    if (step === 1) {
+      setStep(2)
+      return
+    }
+
     setLoading(true)
-    await new Promise(r => setTimeout(r, 1000))
-    router.push('/app')
+
+    if (IS_DEMO) {
+      await new Promise(r => setTimeout(r, 800))
+      router.push('/tasks')
+      return
+    }
+
+    const supabase = createClient()
+    const { error: authError } = await supabase.auth.signUp({
+      email: form.email,
+      password: form.password,
+      options: {
+        data: {
+          full_name: form.name,
+          borough: form.borough,
+          neighborhood: form.neighborhood,
+        },
+      },
+    })
+
+    if (authError) {
+      setError(authError.message)
+      setLoading(false)
+      return
+    }
+
+    router.push('/tasks')
   }
 
   return (
@@ -58,7 +93,7 @@ export default function SignupPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             {step === 1 && (
               <>
-                <h2 className="text-lg font-semibold text-gray-900 mb-1">Create your account</h2>
+                <h2 className="text-lg font-semibold text-gray-900">Create your account</h2>
                 <div>
                   <label htmlFor="name" className="label">Full name</label>
                   <input
@@ -101,10 +136,13 @@ export default function SignupPage() {
 
             {step === 2 && (
               <>
-                <h2 className="text-lg font-semibold text-gray-900 mb-1">Where are you based?</h2>
-                <p className="text-sm text-gray-500 -mt-3 mb-2">
-                  This helps us show you nearby tasks. You get <span className="font-semibold text-clutch-600">20 free credits</span> to start!
-                </p>
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">Where are you based?</h2>
+                  <p className="text-sm text-gray-500 mt-1">
+                    This helps us show you nearby tasks. You get{' '}
+                    <span className="font-semibold text-clutch-600">20 free credits</span> to start!
+                  </p>
+                </div>
                 <div>
                   <label htmlFor="borough" className="label">Borough</label>
                   <select
@@ -139,17 +177,32 @@ export default function SignupPage() {
               </>
             )}
 
+            {error && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+                {error}
+              </p>
+            )}
+
             <button
               type="submit"
-              className="btn-primary w-full flex justify-center items-center gap-2"
+              className="btn-primary w-full justify-center"
               disabled={loading}
             >
               {loading
-                ? <><span className="animate-spin">◌</span> Creating account...</>
+                ? <><span className="animate-spin inline-block">◌</span> Creating account...</>
                 : step === 1 ? 'Continue →' : 'Join Clutch →'
               }
             </button>
           </form>
+
+          {step === 2 && (
+            <button
+              onClick={() => setStep(1)}
+              className="mt-3 w-full text-center text-sm text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              ← Back
+            </button>
+          )}
 
           <div className="mt-6 text-center text-sm text-gray-500">
             Already have an account?{' '}

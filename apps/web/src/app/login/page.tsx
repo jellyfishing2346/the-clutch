@@ -3,19 +3,39 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+
+const IS_DEMO = !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  process.env.NEXT_PUBLIC_SUPABASE_URL.includes('your-project')
 
 export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    // Demo: skip actual auth and go straight to app
-    await new Promise(r => setTimeout(r, 800))
-    router.push('/app')
+    setError('')
+
+    if (IS_DEMO) {
+      await new Promise(r => setTimeout(r, 600))
+      router.push('/tasks')
+      return
+    }
+
+    const supabase = createClient()
+    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+
+    if (authError) {
+      setError(authError.message)
+      setLoading(false)
+      return
+    }
+
+    router.push('/tasks')
   }
 
   return (
@@ -41,6 +61,7 @@ export default function LoginPage() {
                 autoComplete="email"
               />
             </div>
+
             <div>
               <label htmlFor="password" className="label">Password</label>
               <input
@@ -55,16 +76,18 @@ export default function LoginPage() {
               />
             </div>
 
+            {error && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+                {error}
+              </p>
+            )}
+
             <button
               type="submit"
-              className="btn-primary w-full justify-center flex items-center gap-2"
+              className="btn-primary w-full justify-center"
               disabled={loading}
             >
-              {loading ? (
-                <>
-                  <span className="animate-spin">◌</span> Signing in...
-                </>
-              ) : 'Sign in'}
+              {loading ? <><span className="animate-spin inline-block">◌</span> Signing in...</> : 'Sign in'}
             </button>
           </form>
 
@@ -75,10 +98,9 @@ export default function LoginPage() {
             </Link>
           </div>
 
-          {/* Demo shortcut */}
           <div className="mt-4 pt-4 border-t border-gray-100 text-center">
             <button
-              onClick={() => router.push('/app')}
+              onClick={() => router.push('/tasks')}
               className="text-xs text-gray-400 hover:text-clutch-500 transition-colors"
             >
               Demo mode: skip login →
