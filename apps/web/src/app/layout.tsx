@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Clutch — Hyperlocal Community Help',
+  title: 'The Clutch 🫶 ',
   description: 'Connect with neighbors for everyday tasks. Post or find help for errands, moving, tech support, and more — right in your neighborhood.',
   keywords: ['community', 'local help', 'neighborhood', 'tasks', 'NYC', 'hyperlocal'],
   openGraph: {

@@ -25,7 +25,7 @@ export default function ProfilePage({ params }: { params: { id: string } }) {
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
-      <Link href="/app" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-clutch-600 mb-5 transition-colors">
+      <Link href="/home" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-clutch-600 mb-5 transition-colors">
         ← Back
       </Link>
 

@@ -7,11 +7,11 @@ import { Avatar } from '@/components/ui/Avatar'
 import { MOCK_USERS } from '@/lib/mock-data'
 
 const NAV_ITEMS = [
-  { href: '/app', label: 'Map', icon: '🗺️' },
-  { href: '/app/tasks', label: 'Tasks', icon: '📋' },
-  { href: '/app/tasks/new', label: 'Post', icon: '＋', highlight: true },
-  { href: '/app/credits', label: 'Credits', icon: '◈' },
-  { href: '/app/profile/u1', label: 'Profile', icon: '👤' },
+  { href: '/home', label: 'Map', icon: '🗺️' },
+  { href: '/tasks', label: 'Tasks', icon: '📋' },
+  { href: '/tasks/new', label: 'Post', icon: '＋', highlight: true },
+  { href: '/credits', label: 'Credits', icon: '◈' },
+  { href: '/profile/u1', label: 'Profile', icon: '👤' },
 ]
 
 const ME = MOCK_USERS[0]
@@ -23,7 +23,7 @@ export function Navbar() {
     <>
       {/* Desktop top nav */}
       <header className="hidden md:flex fixed top-0 left-0 right-0 z-50 h-16 bg-white/95 backdrop-blur border-b border-gray-100 px-6 items-center justify-between">
-        <Link href="/app" className="flex items-center gap-2 font-bold text-xl">
+        <Link href="/home" className="flex items-center gap-2 font-bold text-xl">
           <span className="text-gradient">Clutch</span>
           <span className="text-xs font-normal text-gray-400 mt-0.5">NYC</span>
         </Link>
@@ -46,10 +46,10 @@ export function Navbar() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <Link href="/app/tasks/new" className="btn-primary text-sm py-2 px-5">
+          <Link href="/tasks/new" className="btn-primary text-sm py-2 px-5">
             + Post a Task
           </Link>
-          <Link href="/app/profile/u1">
+          <Link href="/profile/u1">
             <Avatar src={ME.avatar_url} name={ME.name} size="sm" />
           </Link>
         </div>
@@ -59,7 +59,7 @@ export function Navbar() {
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 px-2 py-1 safe-area-bottom">
         <div className="flex items-center justify-around">
           {NAV_ITEMS.map(item => {
-            const isActive = pathname === item.href || (item.href !== '/app' && pathname.startsWith(item.href))
+            const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
             if (item.highlight) {
               return (
                 <Link

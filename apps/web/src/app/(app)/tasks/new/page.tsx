@@ -45,7 +45,7 @@ export default function NewTaskPage() {
     if (step < 2) { setStep(s => s + 1); return }
     setSubmitting(true)
     await new Promise(r => setTimeout(r, 1000))
-    router.push('/app/tasks')
+    router.push('/tasks')
   }
 
   return (

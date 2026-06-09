@@ -34,7 +34,7 @@ export default function TaskDetailPage({ params }: { params: { id: string } }) {
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
       {/* Back */}
-      <Link href="/app/tasks" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-clutch-600 mb-5 transition-colors">
+      <Link href="/tasks" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-clutch-600 mb-5 transition-colors">
         ← Back to tasks
       </Link>
 
@@ -122,7 +122,7 @@ export default function TaskDetailPage({ params }: { params: { id: string } }) {
           {task.creator && (
             <div className="card p-5">
               <h3 className="text-sm font-semibold text-gray-700 mb-3">Posted by</h3>
-              <Link href={`/app/profile/${task.creator.id}`} className="flex items-center gap-3 mb-3 hover:opacity-80 transition-opacity">
+              <Link href={`/profile/${task.creator.id}`} className="flex items-center gap-3 mb-3 hover:opacity-80 transition-opacity">
                 <Avatar src={task.creator.avatar_url} name={task.creator.name} size="lg" />
                 <div>
                   <div className="font-semibold text-gray-900">{task.creator.name}</div>
@@ -152,7 +152,7 @@ export default function TaskDetailPage({ params }: { params: { id: string } }) {
               </div>
 
               <Link
-                href={`/app/profile/${task.creator.id}`}
+                href={`/profile/${task.creator.id}`}
                 className="mt-4 text-xs text-clutch-600 hover:underline block text-center"
               >
                 View full profile →

@@ -22,7 +22,7 @@ export default function LoginPage() {
 
     if (IS_DEMO) {
       await new Promise(r => setTimeout(r, 600))
-      router.push('/tasks')
+      router.push('/home')
       return
     }
 
@@ -35,7 +35,7 @@ export default function LoginPage() {
       return
     }
 
-    router.push('/tasks')
+    router.push('/home')
   }
 
   return (
@@ -100,7 +100,7 @@ export default function LoginPage() {
 
           <div className="mt-4 pt-4 border-t border-gray-100 text-center">
             <button
-              onClick={() => router.push('/tasks')}
+              onClick={() => router.push('/home')}
               className="text-xs text-gray-400 hover:text-clutch-500 transition-colors"
             >
               Demo mode: skip login →

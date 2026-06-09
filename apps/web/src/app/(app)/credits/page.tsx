@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { MOCK_USERS, MOCK_TRANSACTIONS } from '@/lib/mock-data'
 import { formatRelativeTime } from '@/lib/utils'
 import { CREDITS_CONFIG } from 'shared'
@@ -110,9 +111,9 @@ export default function CreditsPage() {
         <div className="text-2xl mb-2">🤝</div>
         <p className="font-semibold text-clutch-800 mb-1">Want more credits?</p>
         <p className="text-sm text-clutch-600 mb-3">Help a neighbor with a free task and earn 10 credits instantly.</p>
-        <a href="/app/tasks?filter=free" className="btn-primary text-sm py-2 px-5 inline-block">
+        <Link href="/tasks?filter=free" className="btn-primary text-sm py-2 px-5 inline-flex">
           Find free tasks to help with
-        </a>
+        </Link>
       </div>
     </div>
   )

@@ -65,7 +65,7 @@ export default function LandingPage() {
             <Link href="/signup" className="btn-primary text-base py-4 px-8 rounded-2xl">
               Find help near me →
             </Link>
-            <Link href="/app/tasks" className="btn-secondary text-base py-4 px-8 rounded-2xl">
+            <Link href="/tasks" className="btn-secondary text-base py-4 px-8 rounded-2xl">
               Browse open tasks
             </Link>
           </div>
@@ -206,7 +206,7 @@ export default function LandingPage() {
             <span className="ml-2">— Neighbors helping neighbors across NYC.</span>
           </div>
           <div className="flex gap-6">
-            <Link href="/app/tasks" className="hover:text-white transition-colors">Browse Tasks</Link>
+            <Link href="/tasks" className="hover:text-white transition-colors">Browse Tasks</Link>
             <Link href="/signup" className="hover:text-white transition-colors">Sign Up</Link>
             <Link href="/login" className="hover:text-white transition-colors">Sign In</Link>
           </div>

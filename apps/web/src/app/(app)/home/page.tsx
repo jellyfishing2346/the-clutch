@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState } from 'react'
 import { TaskMap } from '@/components/map/TaskMap'
 import { TaskCard } from '@/components/tasks/TaskCard'
@@ -23,7 +24,7 @@ export default function AppHomePage() {
         {/* Credits banner */}
         <div className="px-4 py-3 gradient-brand text-white text-sm flex items-center justify-between">
           <span className="font-medium">◈ {ME.credits_balance} credits</span>
-          <a href="/app/credits" className="text-white/80 hover:text-white text-xs underline">Earn more</a>
+          <Link href="/credits" className="text-white/80 hover:text-white text-xs underline">Earn more</Link>
         </div>
 
         {/* Filter chips */}
@@ -77,7 +78,6 @@ export default function AppHomePage() {
           height="100%"
         />
 
-        {/* Task preview popup */}
         {selectedTask && (
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-80 z-10">
             <div className="card p-4 shadow-xl animate-slide-up">
@@ -92,7 +92,7 @@ export default function AppHomePage() {
         )}
       </div>
 
-      {/* Mobile map toggle area */}
+      {/* Mobile map notice */}
       <div className="md:hidden px-4 py-2">
         <div className="bg-clutch-50 rounded-xl p-3 text-center text-sm text-clutch-600">
           🗺️ Map view available on desktop

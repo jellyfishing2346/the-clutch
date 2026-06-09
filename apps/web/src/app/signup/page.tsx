@@ -43,7 +43,7 @@ export default function SignupPage() {
 
     if (IS_DEMO) {
       await new Promise(r => setTimeout(r, 800))
-      router.push('/tasks')
+      router.push('/home')
       return
     }
 
@@ -66,7 +66,7 @@ export default function SignupPage() {
       return
     }
 
-    router.push('/tasks')
+    router.push('/home')
   }
 
   return (

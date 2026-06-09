@@ -17,7 +17,7 @@ export function TaskCard({ task, compact = false }: TaskCardProps) {
   const category = TASK_CATEGORIES[task.category]
 
   return (
-    <Link href={`/app/tasks/${task.id}`} className="block">
+    <Link href={`/tasks/${task.id}`} className="block">
       <article className="card p-4 hover:border-clutch-200 cursor-pointer animate-fade-in">
         {/* Header row */}
         <div className="flex items-start justify-between gap-2 mb-3">
