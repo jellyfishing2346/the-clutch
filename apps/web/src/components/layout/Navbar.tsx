@@ -7,7 +7,6 @@ import { cn } from '@/lib/utils'
 import { Avatar } from '@/components/ui/Avatar'
 import { createClient } from '@/lib/supabase/client'
 import { fetchProfile } from '@/lib/api/users'
-import { MOCK_USERS } from '@/lib/mock-data'
 import type { UserProfile } from 'shared'
 
 const NAV_ITEMS = [
@@ -20,8 +19,8 @@ const NAV_ITEMS = [
 
 export function Navbar() {
   const pathname = usePathname()
-  const [me, setMe] = useState<UserProfile>(MOCK_USERS[0])
-  const [userId, setUserId] = useState<string>('u1')
+  const [me, setMe] = useState<UserProfile | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
 
   useEffect(() => {
     const supabase = createClient()
@@ -34,7 +33,12 @@ export function Navbar() {
     })
   }, [])
 
-  const profileHref = `/profile/${userId}`
+  const profileHref = userId ? `/profile/${userId}` : '/profile'
+
+  function isActive(href: string) {
+    if (href === '/profile') return pathname.startsWith('/profile')
+    return pathname === href || pathname.startsWith(href + '/')
+  }
 
   return (
     <>
@@ -54,7 +58,7 @@ export function Navbar() {
                 href={href}
                 className={cn(
                   'px-4 py-2 rounded-xl text-sm font-medium transition-colors',
-                  pathname === href || pathname.startsWith(href + '/')
+                  isActive(item.href)
                     ? 'bg-clutch-50 text-clutch-700'
                     : 'text-gray-600 hover:bg-gray-50'
                 )}
@@ -70,7 +74,11 @@ export function Navbar() {
             + Post a Task
           </Link>
           <Link href={profileHref}>
-            <Avatar src={me.avatar_url} name={me.name} size="sm" />
+            {me ? (
+              <Avatar src={me.avatar_url} name={me.name} size="sm" />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-gray-200 animate-pulse" />
+            )}
           </Link>
         </div>
       </header>
@@ -80,7 +88,7 @@ export function Navbar() {
         <div className="flex items-center justify-around">
           {NAV_ITEMS.map(item => {
             const href = item.href === '/profile' ? profileHref : item.href
-            const isActive = pathname === href || pathname.startsWith(href + '/')
+            const active = isActive(item.href)
             if (item.highlight) {
               return (
                 <Link key={item.href} href={href} className="flex flex-col items-center gap-0.5 -mt-5">
@@ -96,7 +104,7 @@ export function Navbar() {
                 href={href}
                 className={cn(
                   'flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-colors',
-                  isActive ? 'text-clutch-600' : 'text-gray-400'
+                  active ? 'text-clutch-600' : 'text-gray-400'
                 )}
               >
                 <span className="text-xl">{item.icon}</span>

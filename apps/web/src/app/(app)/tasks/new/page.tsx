@@ -1,10 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { TASK_CATEGORIES, BOROUGHS, NEIGHBORHOODS, CREDITS_CONFIG } from 'shared'
 import type { TaskCategory, PaymentType } from 'shared'
 import { createTask } from '@/lib/api/tasks'
+import { fetchCreditsBalance } from '@/lib/api/credits'
+import { createClient } from '@/lib/supabase/client'
+import Link from 'next/link'
 
 const BOROUGH_COORDS: Record<string, { lat: number; lng: number }> = {
   Manhattan:     { lat: 40.7831, lng: -73.9712 },
@@ -20,6 +23,9 @@ export default function NewTaskPage() {
   const router = useRouter()
   const [step, setStep] = useState(0)
   const [submitting, setSubmitting] = useState(false)
+  const [posted, setPosted] = useState(false)
+  const [submitError, setSubmitError] = useState('')
+  const [creditsBalance, setCreditsBalance] = useState<number | null>(null)
 
   const [form, setForm] = useState({
     title: '',
@@ -33,6 +39,12 @@ export default function NewTaskPage() {
     cashAmount: '',
     creditsAmount: '',
   })
+
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data: { user } }) => {
+      if (user) fetchCreditsBalance(user.id).then(setCreditsBalance)
+    })
+  }, [])
 
   const update = (field: string, value: string) => setForm(prev => ({ ...prev, [field]: value }))
 
@@ -54,9 +66,10 @@ export default function NewTaskPage() {
     if (step < 2) { setStep(s => s + 1); return }
     if (!form.category) return
     setSubmitting(true)
+    setSubmitError('')
 
     const location = BOROUGH_COORDS[form.borough] ?? { lat: 40.7831, lng: -73.9712 }
-    await createTask({
+    const result = await createTask({
       title: form.title,
       description: form.description,
       category: form.category as TaskCategory,
@@ -70,7 +83,27 @@ export default function NewTaskPage() {
       scheduledFor: form.scheduledFor || undefined,
     })
 
-    router.push('/tasks')
+    if (result) {
+      setPosted(true)
+      setTimeout(() => router.push('/tasks'), 2000)
+    } else {
+      setSubmitError('Failed to post your task. Please try again.')
+      setSubmitting(false)
+    }
+  }
+
+  if (posted) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-6">
+        <div className="card p-10 text-center">
+          <div className="text-5xl mb-4">🚀</div>
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Task posted!</h2>
+          <p className="text-gray-500 text-sm mb-6">Your neighbors can now see it and offer to help.</p>
+          <div className="animate-spin text-2xl text-clutch-400">◌</div>
+          <p className="text-xs text-gray-400 mt-2">Redirecting to tasks...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -268,7 +301,10 @@ export default function NewTaskPage() {
               <div className="bg-clutch-50 rounded-xl p-4 text-sm text-clutch-700">
                 <div className="font-semibold mb-1">Estimated cost: {estimatedCost} credits</div>
                 <div className="text-clutch-600 text-xs">
-                  Credits are deducted when your task is accepted. Your balance: <strong>145 CR</strong>
+                  Credits are deducted when your task is accepted.{' '}
+                  {creditsBalance !== null
+                    ? <>Your balance: <strong>{creditsBalance} CR</strong>{creditsBalance < estimatedCost && <span className="text-red-500 ml-1">— insufficient credits</span>}</>
+                    : 'Loading balance...'}
                 </div>
               </div>
             )}
@@ -301,14 +337,14 @@ export default function NewTaskPage() {
           </div>
         )}
 
+        {submitError && (
+          <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">{submitError}</p>
+        )}
+
         {/* Nav buttons */}
         <div className="flex gap-3">
           {step > 0 && (
-            <button
-              type="button"
-              onClick={() => setStep(s => s - 1)}
-              className="btn-secondary flex-1"
-            >
+            <button type="button" onClick={() => setStep(s => s - 1)} className="btn-secondary flex-1">
               ← Back
             </button>
           )}
@@ -323,6 +359,14 @@ export default function NewTaskPage() {
             }
           </button>
         </div>
+
+        {step === 0 && (
+          <div className="text-center">
+            <Link href="/tasks" className="text-sm text-gray-400 hover:text-gray-600 transition-colors">
+              Cancel
+            </Link>
+          </div>
+        )}
       </form>
     </div>
   )

@@ -24,12 +24,14 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
   const [reviews, setReviews] = useState<Review[]>(
     MOCK_REVIEWS.filter(r => r.reviewee_id === id)
   )
-  const [completedTasks, setCompletedTasks] = useState<Task[]>(
+  const [postedTasks, setPostedTasks] = useState<Task[]>(
     MOCK_TASKS.filter(t => t.creator_id === id).slice(0, 3)
   )
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(false)
-  const [editForm, setEditForm] = useState({ name: '', bio: '', borough: '', neighborhood: '' })
+  const [editForm, setEditForm] = useState({
+    name: '', bio: '', borough: '', neighborhood: '', languages: [] as string[],
+  })
   const [saving, setSaving] = useState(false)
 
   async function handleLogout() {
@@ -41,7 +43,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
     fetchProfile(id).then(data => { if (data) setUser(data) })
     fetchReviews(id).then(setReviews)
     fetchNearbyTasks().then(tasks =>
-      setCompletedTasks(tasks.filter(t => t.creator_id === id).slice(0, 3))
+      setPostedTasks(tasks.filter(t => t.creator_id === id).slice(0, 3))
     )
     createClient().auth.getUser().then(({ data: { user } }) => {
       setCurrentUserId(user?.id ?? null)
@@ -55,9 +57,32 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
         bio: user.bio ?? '',
         borough: user.borough ?? '',
         neighborhood: user.neighborhood ?? '',
+        languages: user.languages ?? [],
       })
     }
   }, [user])
+
+  const isDirty = user && (
+    editForm.name !== user.name ||
+    editForm.bio !== (user.bio ?? '') ||
+    editForm.borough !== (user.borough ?? '') ||
+    editForm.neighborhood !== (user.neighborhood ?? '') ||
+    JSON.stringify(editForm.languages) !== JSON.stringify(user.languages ?? [])
+  )
+
+  function handleCloseModal() {
+    if (isDirty && !confirm('Discard unsaved changes?')) return
+    setIsEditing(false)
+  }
+
+  function toggleLanguage(code: string) {
+    setEditForm(p => ({
+      ...p,
+      languages: p.languages.includes(code)
+        ? p.languages.filter(l => l !== code)
+        : [...p.languages, code],
+    }))
+  }
 
   async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault()
@@ -67,6 +92,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
       bio: editForm.bio || null,
       borough: editForm.borough || null,
       neighborhood: editForm.neighborhood || null,
+      languages: editForm.languages,
     })
     if (ok) {
       setUser(prev => prev ? {
@@ -75,6 +101,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
         bio: editForm.bio || null,
         borough: editForm.borough || null,
         neighborhood: editForm.neighborhood || null,
+        languages: editForm.languages,
       } : prev)
       setIsEditing(false)
     }
@@ -95,7 +122,6 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
   const editNeighborhoods = editForm.borough
     ? NEIGHBORHOODS[editForm.borough as keyof typeof NEIGHBORHOODS] ?? []
     : []
-
   const langLabels = user.languages.map(
     code => SUPPORTED_LANGUAGES.find(l => l.code === code)?.label ?? code
   )
@@ -117,29 +143,19 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
                 {[user.neighborhood, user.borough].filter(Boolean).join(', ')}
               </div>
             )}
-
             <div className="flex justify-center mb-3">
               <TrustBadge level={user.trust_level} />
             </div>
-
             <StarRating rating={user.rating_avg} count={user.rating_count} size="md" />
-
             {user.bio && (
               <p className="text-xs text-gray-500 mt-3 leading-relaxed">{user.bio}</p>
             )}
-
             {isMe && (
               <div className="mt-4 space-y-2">
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="btn-secondary w-full text-sm py-2"
-                >
+                <button onClick={() => setIsEditing(true)} className="btn-secondary w-full text-sm py-2">
                   Edit profile
                 </button>
-                <button
-                  onClick={handleLogout}
-                  className="w-full text-sm py-2 rounded-xl text-red-500 hover:bg-red-50 transition-colors font-medium"
-                >
+                <button onClick={handleLogout} className="w-full text-sm py-2 rounded-xl text-red-500 hover:bg-red-50 transition-colors font-medium">
                   Sign out
                 </button>
               </div>
@@ -198,11 +214,9 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
 
         {/* Main content */}
         <div className="md:col-span-2 space-y-5">
-          {/* Recent reviews */}
+          {/* Reviews */}
           <div className="card p-5">
-            <h2 className="font-semibold text-gray-900 mb-4">
-              Reviews ({reviews.length})
-            </h2>
+            <h2 className="font-semibold text-gray-900 mb-4">Reviews ({reviews.length})</h2>
             {reviews.length > 0 ? (
               <div className="space-y-4">
                 {reviews.map(review => (
@@ -228,12 +242,12 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
             )}
           </div>
 
-          {/* Recent tasks */}
-          {completedTasks.length > 0 && (
+          {/* Posted tasks */}
+          {postedTasks.length > 0 && (
             <div className="card p-5">
-              <h2 className="font-semibold text-gray-900 mb-4">Recent tasks</h2>
+              <h2 className="font-semibold text-gray-900 mb-4">Posted tasks</h2>
               <div className="space-y-3">
-                {completedTasks.map(task => (
+                {postedTasks.map(task => (
                   <TaskCard key={task.id} task={task} compact />
                 ))}
               </div>
@@ -249,11 +263,14 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
 
       {/* Edit profile modal */}
       {isEditing && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={e => { if (e.target === e.currentTarget) setIsEditing(false) }}>
-          <div className="card w-full max-w-md p-6">
+        <div
+          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+          onClick={e => { if (e.target === e.currentTarget) handleCloseModal() }}
+        >
+          <div className="card w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-bold text-gray-900">Edit profile</h2>
-              <button onClick={() => setIsEditing(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+              <button onClick={handleCloseModal} className="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
             </div>
 
             <form onSubmit={handleSaveProfile} className="space-y-4">
@@ -306,12 +323,28 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
                 </div>
               )}
 
+              <div>
+                <label className="label">Languages</label>
+                <div className="flex flex-wrap gap-2">
+                  {SUPPORTED_LANGUAGES.map(lang => (
+                    <button
+                      key={lang.code}
+                      type="button"
+                      onClick={() => toggleLanguage(lang.code)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                        editForm.languages.includes(lang.code)
+                          ? 'bg-purple-600 text-white border-purple-600'
+                          : 'bg-white text-gray-600 border-gray-200 hover:border-purple-300'
+                      }`}
+                    >
+                      {lang.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsEditing(false)}
-                  className="btn-secondary flex-1"
-                >
+                <button type="button" onClick={handleCloseModal} className="btn-secondary flex-1">
                   Cancel
                 </button>
                 <button

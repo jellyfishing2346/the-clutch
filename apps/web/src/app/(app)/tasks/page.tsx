@@ -7,6 +7,8 @@ import { fetchNearbyTasks } from '@/lib/api/tasks'
 import { TASK_CATEGORIES } from 'shared'
 import type { Task, TaskCategory, PaymentType } from 'shared'
 
+type SortOrder = 'newest' | 'highest_pay'
+
 const BOROUGH_FILTERS = ['All boroughs', 'Manhattan', 'Queens', 'Brooklyn', 'Bronx']
 
 export default function TasksPage() {
@@ -15,18 +17,28 @@ export default function TasksPage() {
   const [categoryFilter, setCategoryFilter] = useState<TaskCategory | 'all'>('all')
   const [paymentFilter, setPaymentFilter] = useState<PaymentType | 'all'>('all')
   const [boroughFilter, setBoroughFilter] = useState('All boroughs')
+  const [sortOrder, setSortOrder] = useState<SortOrder>('newest')
 
   useEffect(() => {
     fetchNearbyTasks().then(data => setAllTasks(data))
   }, [])
 
-  const tasks = allTasks.filter(task => {
+  const filtered = allTasks.filter(task => {
     const matchesSearch = !search || task.title.toLowerCase().includes(search.toLowerCase()) ||
       task.description.toLowerCase().includes(search.toLowerCase())
     const matchesCategory = categoryFilter === 'all' || task.category === categoryFilter
     const matchesPayment = paymentFilter === 'all' || task.payment_type === paymentFilter
     const matchesBorough = boroughFilter === 'All boroughs' || task.borough === boroughFilter
     return matchesSearch && matchesCategory && matchesPayment && matchesBorough
+  })
+
+  const tasks = [...filtered].sort((a, b) => {
+    if (sortOrder === 'highest_pay') {
+      const aVal = a.payment_amount ?? a.credits_amount ?? 0
+      const bVal = b.payment_amount ?? b.credits_amount ?? 0
+      return bVal - aVal
+    }
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   })
 
   return (
@@ -76,7 +88,7 @@ export default function TasksPage() {
         </select>
 
         {/* Category chips */}
-        <div className="flex gap-2 overflow-x-auto">
+        <div className="flex gap-2 overflow-x-auto pb-1">
           <button
             onClick={() => setCategoryFilter('all')}
             className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
@@ -108,10 +120,14 @@ export default function TasksPage() {
         <span className="text-sm text-gray-500">
           {tasks.length} task{tasks.length !== 1 ? 's' : ''} found
         </span>
-        <select className="text-xs text-gray-500 border-none bg-transparent" aria-label="Sort tasks">
-          <option>Newest first</option>
-          <option>Closest first</option>
-          <option>Highest pay</option>
+        <select
+          className="text-xs text-gray-500 border border-gray-200 rounded-lg px-2 py-1 bg-white"
+          value={sortOrder}
+          onChange={e => setSortOrder(e.target.value as SortOrder)}
+          aria-label="Sort tasks"
+        >
+          <option value="newest">Newest first</option>
+          <option value="highest_pay">Highest pay</option>
         </select>
       </div>
 

@@ -4,10 +4,10 @@ import { TASK_CATEGORIES } from 'shared'
 const FEATURED_CATEGORIES = ['simple_help', 'errands', 'tech_help', 'pet_care', 'moving', 'tutoring'] as const
 
 const STATS = [
-  { value: '500+', label: 'Community members' },
-  { value: '1,200+', label: 'Tasks completed' },
-  { value: '6', label: 'NYC neighborhoods' },
-  { value: '4.8★', label: 'Average rating' },
+  { value: 'Free', label: 'Always free to join' },
+  { value: 'All 5', label: 'NYC boroughs' },
+  { value: '12', label: 'Task categories' },
+  { value: '4-tier', label: 'Trust system' },
 ]
 
 const HOW_IT_WORKS = [

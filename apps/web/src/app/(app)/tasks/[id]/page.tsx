@@ -23,6 +23,7 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
   )
   const [applying, setApplying] = useState(false)
   const [applied, setApplied] = useState(false)
+  const [applyError, setApplyError] = useState('')
   const [message, setMessage] = useState('')
 
   useEffect(() => {
@@ -52,8 +53,13 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
     e.preventDefault()
     if (!task) return
     setApplying(true)
-    await applyToTask(task.id, message)
-    setApplied(true)
+    setApplyError('')
+    const ok = await applyToTask(task.id, message)
+    if (ok) {
+      setApplied(true)
+    } else {
+      setApplyError('Something went wrong. You may have already applied, or the task is no longer available.')
+    }
     setApplying(false)
   }
 
@@ -125,6 +131,9 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
                   />
                   <div className="text-right text-xs text-gray-400 mt-1">{message.length}/400</div>
                 </div>
+                {applyError && (
+                  <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">{applyError}</p>
+                )}
                 <button
                   type="submit"
                   className="btn-primary w-full flex justify-center items-center gap-2"
@@ -138,7 +147,17 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
             <div className="card p-5 border-green-200 bg-green-50 text-center">
               <div className="text-3xl mb-2">🎉</div>
               <p className="font-semibold text-green-700">You offered to help!</p>
-              <p className="text-sm text-green-600 mt-1">{task.creator?.name?.split(' ')[0]} will reach out if they pick you.</p>
+              <p className="text-sm text-green-600 mt-1">
+                {task.creator?.name?.split(' ')[0] ?? 'The poster'} will reach out if they pick you.
+              </p>
+              <div className="mt-4 flex gap-3 justify-center">
+                <Link href="/tasks" className="btn-secondary text-sm py-2 px-4">
+                  Browse more tasks
+                </Link>
+                <Link href="/credits" className="btn-ghost text-sm py-2 px-4">
+                  View my credits
+                </Link>
+              </div>
             </div>
           )}
         </div>

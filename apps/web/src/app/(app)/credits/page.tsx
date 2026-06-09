@@ -3,18 +3,14 @@
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { MOCK_USERS, MOCK_TRANSACTIONS } from '@/lib/mock-data'
 import { fetchCreditsBalance, fetchTransactions } from '@/lib/api/credits'
 import { formatRelativeTime } from '@/lib/utils'
 import { CREDITS_CONFIG } from 'shared'
 import type { CreditsTransaction } from 'shared'
 
-const ME = MOCK_USERS[0]
-
 const HOW_TO_EARN = [
   { icon: '🤝', action: 'Help with a free task', amount: `+${CREDITS_CONFIG.earnPerHelpTask}` },
   { icon: '⭐', action: 'Receive a 5-star review', amount: '+5' },
-  { icon: '👋', action: 'Refer a friend', amount: '+15' },
   { icon: '🎁', action: 'Welcome bonus (one time)', amount: `+${CREDITS_CONFIG.bonusOnboarding}` },
 ]
 
@@ -25,23 +21,32 @@ const HOW_TO_SPEND = [
 ]
 
 export default function CreditsPage() {
-  const [balance, setBalance] = useState(ME.credits_balance)
-  const [transactions, setTransactions] = useState<CreditsTransaction[]>(
-    [...MOCK_TRANSACTIONS].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-  )
+  const [balance, setBalance] = useState<number | null>(null)
+  const [transactions, setTransactions] = useState<CreditsTransaction[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data: { user } }) => {
-      const userId = user?.id ?? ME.id
-      fetchCreditsBalance(userId).then(setBalance)
-      fetchTransactions(userId).then(txns =>
+      if (!user) { setLoading(false); return }
+      Promise.all([
+        fetchCreditsBalance(user.id),
+        fetchTransactions(user.id),
+      ]).then(([bal, txns]) => {
+        setBalance(bal)
         setTransactions([...txns].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()))
-      )
+        setLoading(false)
+      })
     })
   }, [])
 
-  const allTransactions = transactions
+  const now = new Date()
+  const thisMonthTxns = transactions.filter(tx => {
+    const d = new Date(tx.created_at)
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+  })
+  const earnedThisMonth = thisMonthTxns.filter(t => t.amount > 0).reduce((s, t) => s + t.amount, 0)
+  const spentThisMonth = thisMonthTxns.filter(t => t.amount < 0).reduce((s, t) => s + Math.abs(t.amount), 0)
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
@@ -50,11 +55,13 @@ export default function CreditsPage() {
 
       {/* Balance card */}
       <div className="gradient-brand rounded-3xl p-8 text-white text-center mb-6 shadow-lg">
-        <div className="text-6xl font-bold mb-1">{balance}</div>
+        <div className="text-6xl font-bold mb-1">
+          {loading ? <span className="animate-pulse">—</span> : balance ?? 0}
+        </div>
         <div className="text-clutch-100 text-sm font-medium">Clutch Credits</div>
         <div className="mt-4 flex justify-center gap-4 text-xs text-white/80">
-          <span>↑ Earned this month: 30 CR</span>
-          <span>↓ Spent this month: 15 CR</span>
+          <span>↑ Earned this month: {earnedThisMonth} CR</span>
+          <span>↓ Spent this month: {spentThisMonth} CR</span>
         </div>
       </div>
 
@@ -98,30 +105,38 @@ export default function CreditsPage() {
       {/* Transaction history */}
       <div className="card p-5">
         <h2 className="font-semibold text-gray-900 mb-4">Transaction history</h2>
-        <div className="space-y-1">
-          {allTransactions.map(tx => (
-            <div key={tx.id} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
-              <div className="flex items-center gap-3">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
-                  tx.type === 'earned' || tx.type === 'bonus'
-                    ? 'bg-green-50 text-green-600'
-                    : 'bg-red-50 text-red-500'
-                }`}>
-                  {tx.type === 'earned' ? '↑' : tx.type === 'bonus' ? '★' : '↓'}
+        {loading ? (
+          <div className="space-y-3">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-12 bg-gray-100 rounded-xl animate-pulse" />
+            ))}
+          </div>
+        ) : transactions.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-6">No transactions yet.</p>
+        ) : (
+          <div className="space-y-1">
+            {transactions.map(tx => (
+              <div key={tx.id} className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
+                <div className="flex items-center gap-3">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm ${
+                    tx.type === 'earned' || tx.type === 'bonus'
+                      ? 'bg-green-50 text-green-600'
+                      : 'bg-red-50 text-red-500'
+                  }`}>
+                    {tx.type === 'earned' ? '↑' : tx.type === 'bonus' ? '★' : '↓'}
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-gray-900">{tx.description}</div>
+                    <div className="text-xs text-gray-400">{formatRelativeTime(tx.created_at)}</div>
+                  </div>
                 </div>
-                <div>
-                  <div className="text-sm font-medium text-gray-900">{tx.description}</div>
-                  <div className="text-xs text-gray-400">{formatRelativeTime(tx.created_at)}</div>
-                </div>
+                <span className={`text-sm font-bold ${tx.amount > 0 ? 'text-green-600' : 'text-gray-700'}`}>
+                  {tx.amount > 0 ? '+' : ''}{tx.amount} CR
+                </span>
               </div>
-              <span className={`text-sm font-bold ${
-                tx.amount > 0 ? 'text-green-600' : 'text-gray-700'
-              }`}>
-                {tx.amount > 0 ? '+' : ''}{tx.amount} CR
-              </span>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* CTA */}
