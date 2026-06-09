@@ -9,6 +9,7 @@ import { TaskCard } from '@/components/tasks/TaskCard'
 import { MOCK_USERS, MOCK_TASKS, MOCK_REVIEWS } from '@/lib/mock-data'
 import { fetchProfile, fetchReviews } from '@/lib/api/users'
 import { fetchNearbyTasks } from '@/lib/api/tasks'
+import { createClient } from '@/lib/supabase/client'
 import { formatRelativeTime } from '@/lib/utils'
 import { TRUST_LEVELS, SUPPORTED_LANGUAGES } from 'shared'
 import type { UserProfile, Review, Task } from 'shared'
@@ -24,6 +25,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
   const [completedTasks, setCompletedTasks] = useState<Task[]>(
     MOCK_TASKS.filter(t => t.creator_id === id).slice(0, 3)
   )
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
   useEffect(() => {
     fetchProfile(id).then(data => { if (data) setUser(data) })
@@ -31,6 +33,9 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
     fetchNearbyTasks().then(tasks =>
       setCompletedTasks(tasks.filter(t => t.creator_id === id).slice(0, 3))
     )
+    createClient().auth.getUser().then(({ data: { user } }) => {
+      setCurrentUserId(user?.id ?? null)
+    })
   }, [id])
 
   if (!user) {
@@ -42,7 +47,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
     )
   }
 
-  const isMe = user.id === 'u1'
+  const isMe = currentUserId === id
   const trustInfo = TRUST_LEVELS[user.trust_level]
 
   const langLabels = user.languages.map(

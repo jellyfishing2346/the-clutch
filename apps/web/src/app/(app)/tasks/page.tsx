@@ -87,7 +87,7 @@ export default function TasksPage() {
           >
             All
           </button>
-          {(Object.entries(TASK_CATEGORIES) as [TaskCategory, typeof TASK_CATEGORIES[TaskCategory]][]).slice(0, 6).map(([key, cat]) => (
+          {(Object.entries(TASK_CATEGORIES) as [TaskCategory, typeof TASK_CATEGORIES[TaskCategory]][]).map(([key, cat]) => (
             <button
               key={key}
               onClick={() => setCategoryFilter(key)}

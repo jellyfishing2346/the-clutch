@@ -4,6 +4,15 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { TASK_CATEGORIES, BOROUGHS, NEIGHBORHOODS, CREDITS_CONFIG } from 'shared'
 import type { TaskCategory, PaymentType } from 'shared'
+import { createTask } from '@/lib/api/tasks'
+
+const BOROUGH_COORDS: Record<string, { lat: number; lng: number }> = {
+  Manhattan:     { lat: 40.7831, lng: -73.9712 },
+  Brooklyn:      { lat: 40.6782, lng: -73.9442 },
+  Queens:        { lat: 40.7282, lng: -73.7949 },
+  Bronx:         { lat: 40.8448, lng: -73.8648 },
+  'Staten Island': { lat: 40.5795, lng: -74.1502 },
+}
 
 const STEPS = ['Task details', 'Location & timing', 'Payment'] as const
 
@@ -43,8 +52,24 @@ export default function NewTaskPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (step < 2) { setStep(s => s + 1); return }
+    if (!form.category) return
     setSubmitting(true)
-    await new Promise(r => setTimeout(r, 1000))
+
+    const location = BOROUGH_COORDS[form.borough] ?? { lat: 40.7831, lng: -73.9712 }
+    await createTask({
+      title: form.title,
+      description: form.description,
+      category: form.category as TaskCategory,
+      location,
+      address: form.address,
+      neighborhood: form.neighborhood,
+      borough: form.borough,
+      paymentType: form.paymentType,
+      paymentAmount: form.cashAmount ? parseFloat(form.cashAmount) : undefined,
+      creditsAmount: form.paymentType === 'credits' ? estimatedCost : undefined,
+      scheduledFor: form.scheduledFor || undefined,
+    })
+
     router.push('/tasks')
   }
 
