@@ -2,20 +2,22 @@
 
 import { useState, useEffect, use } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Avatar } from '@/components/ui/Avatar'
 import { TrustBadge } from '@/components/ui/TrustBadge'
 import { StarRating } from '@/components/ui/StarRating'
 import { TaskCard } from '@/components/tasks/TaskCard'
 import { MOCK_USERS, MOCK_TASKS, MOCK_REVIEWS } from '@/lib/mock-data'
-import { fetchProfile, fetchReviews } from '@/lib/api/users'
+import { fetchProfile, fetchReviews, updateProfile } from '@/lib/api/users'
 import { fetchNearbyTasks } from '@/lib/api/tasks'
 import { createClient } from '@/lib/supabase/client'
 import { formatRelativeTime } from '@/lib/utils'
-import { TRUST_LEVELS, SUPPORTED_LANGUAGES } from 'shared'
+import { TRUST_LEVELS, SUPPORTED_LANGUAGES, BOROUGHS, NEIGHBORHOODS } from 'shared'
 import type { UserProfile, Review, Task } from 'shared'
 
 export default function ProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
+  const router = useRouter()
   const [user, setUser] = useState<UserProfile | null>(
     MOCK_USERS.find(u => u.id === id) ?? null
   )
@@ -26,6 +28,14 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
     MOCK_TASKS.filter(t => t.creator_id === id).slice(0, 3)
   )
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editForm, setEditForm] = useState({ name: '', bio: '', borough: '', neighborhood: '' })
+  const [saving, setSaving] = useState(false)
+
+  async function handleLogout() {
+    await createClient().auth.signOut()
+    router.push('/login')
+  }
 
   useEffect(() => {
     fetchProfile(id).then(data => { if (data) setUser(data) })
@@ -38,6 +48,39 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
     })
   }, [id])
 
+  useEffect(() => {
+    if (user) {
+      setEditForm({
+        name: user.name,
+        bio: user.bio ?? '',
+        borough: user.borough ?? '',
+        neighborhood: user.neighborhood ?? '',
+      })
+    }
+  }, [user])
+
+  async function handleSaveProfile(e: React.FormEvent) {
+    e.preventDefault()
+    setSaving(true)
+    const ok = await updateProfile({
+      name: editForm.name,
+      bio: editForm.bio || null,
+      borough: editForm.borough || null,
+      neighborhood: editForm.neighborhood || null,
+    })
+    if (ok) {
+      setUser(prev => prev ? {
+        ...prev,
+        name: editForm.name,
+        bio: editForm.bio || null,
+        borough: editForm.borough || null,
+        neighborhood: editForm.neighborhood || null,
+      } : prev)
+      setIsEditing(false)
+    }
+    setSaving(false)
+  }
+
   if (!user) {
     return (
       <div className="max-w-3xl mx-auto px-4 py-16 text-center">
@@ -49,6 +92,9 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
 
   const isMe = currentUserId === id
   const trustInfo = TRUST_LEVELS[user.trust_level]
+  const editNeighborhoods = editForm.borough
+    ? NEIGHBORHOODS[editForm.borough as keyof typeof NEIGHBORHOODS] ?? []
+    : []
 
   const langLabels = user.languages.map(
     code => SUPPORTED_LANGUAGES.find(l => l.code === code)?.label ?? code
@@ -64,9 +110,13 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
         {/* Profile card */}
         <div className="md:col-span-1 space-y-4">
           <div className="card p-6 text-center">
-            <Avatar src={user.avatar_url} name={user.name} size="xl" className="mx-auto mb-3" />
+            <Avatar src={user.avatar_url} name={user.name} size="xl" className="mx-auto mb-3" priority />
             <h1 className="text-lg font-bold text-gray-900">{user.name}</h1>
-            <div className="text-sm text-gray-500 mb-3">{user.neighborhood}, {user.borough}</div>
+            {(user.neighborhood || user.borough) && (
+              <div className="text-sm text-gray-500 mb-3">
+                {[user.neighborhood, user.borough].filter(Boolean).join(', ')}
+              </div>
+            )}
 
             <div className="flex justify-center mb-3">
               <TrustBadge level={user.trust_level} />
@@ -79,7 +129,20 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
             )}
 
             {isMe && (
-              <button className="btn-secondary w-full mt-4 text-sm py-2">Edit profile</button>
+              <div className="mt-4 space-y-2">
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="btn-secondary w-full text-sm py-2"
+                >
+                  Edit profile
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-sm py-2 rounded-xl text-red-500 hover:bg-red-50 transition-colors font-medium"
+                >
+                  Sign out
+                </button>
+              </div>
             )}
           </div>
 
@@ -183,6 +246,86 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
           </div>
         </div>
       </div>
+
+      {/* Edit profile modal */}
+      {isEditing && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={e => { if (e.target === e.currentTarget) setIsEditing(false) }}>
+          <div className="card w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-bold text-gray-900">Edit profile</h2>
+              <button onClick={() => setIsEditing(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+            </div>
+
+            <form onSubmit={handleSaveProfile} className="space-y-4">
+              <div>
+                <label className="label">Name</label>
+                <input
+                  className="input"
+                  value={editForm.name}
+                  onChange={e => setEditForm(p => ({ ...p, name: e.target.value }))}
+                  required
+                  maxLength={80}
+                />
+              </div>
+
+              <div>
+                <label className="label">Bio</label>
+                <textarea
+                  className="input resize-none min-h-[90px]"
+                  placeholder="Tell your neighbors a bit about yourself..."
+                  value={editForm.bio}
+                  onChange={e => setEditForm(p => ({ ...p, bio: e.target.value }))}
+                  maxLength={300}
+                />
+                <div className="text-right text-xs text-gray-400 mt-1">{editForm.bio.length}/300</div>
+              </div>
+
+              <div>
+                <label className="label">Borough</label>
+                <select
+                  className="input"
+                  value={editForm.borough}
+                  onChange={e => setEditForm(p => ({ ...p, borough: e.target.value, neighborhood: '' }))}
+                >
+                  <option value="">Select borough...</option>
+                  {BOROUGHS.map(b => <option key={b} value={b}>{b}</option>)}
+                </select>
+              </div>
+
+              {editNeighborhoods.length > 0 && (
+                <div>
+                  <label className="label">Neighborhood</label>
+                  <select
+                    className="input"
+                    value={editForm.neighborhood}
+                    onChange={e => setEditForm(p => ({ ...p, neighborhood: e.target.value }))}
+                  >
+                    <option value="">Select neighborhood...</option>
+                    {editNeighborhoods.map(n => <option key={n} value={n}>{n}</option>)}
+                  </select>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(false)}
+                  className="btn-secondary flex-1"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn-primary flex-1 justify-center"
+                  disabled={saving || !editForm.name.trim()}
+                >
+                  {saving ? <><span className="animate-spin inline-block">◌</span> Saving...</> : 'Save changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

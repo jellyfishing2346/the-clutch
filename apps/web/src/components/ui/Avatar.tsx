@@ -8,6 +8,7 @@ interface AvatarProps {
   name: string
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl'
   className?: string
+  priority?: boolean
 }
 
 const SIZES = {
@@ -18,14 +19,14 @@ const SIZES = {
   xl: { container: 'h-20 w-20', text: 'text-xl' },
 }
 
-export function Avatar({ src, name, size = 'md', className }: AvatarProps) {
+export function Avatar({ src, name, size = 'md', className, priority }: AvatarProps) {
   const { container, text } = SIZES[size]
   const initials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 
   if (src) {
     return (
       <div className={cn('relative rounded-full overflow-hidden flex-shrink-0', container, className)}>
-        <Image src={src} alt={name} fill className="object-cover" unoptimized />
+        <Image src={src} alt={name} fill className="object-cover" unoptimized priority={priority} />
       </div>
     )
   }

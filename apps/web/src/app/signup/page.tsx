@@ -53,7 +53,7 @@ export default function SignupPage() {
       password: form.password,
       options: {
         data: {
-          full_name: form.name,
+          name: form.name,
           borough: form.borough,
           neighborhood: form.neighborhood,
         },

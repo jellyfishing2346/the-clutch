@@ -81,7 +81,7 @@ export async function createTask(payload: CreateTaskPayload): Promise<{ id: stri
       title: payload.title,
       description: payload.description,
       category: payload.category,
-      location: `POINT(${payload.location.lng} ${payload.location.lat})`,
+      location: { lat: payload.location.lat, lng: payload.location.lng },
       address: payload.address,
       neighborhood: payload.neighborhood,
       borough: payload.borough,
