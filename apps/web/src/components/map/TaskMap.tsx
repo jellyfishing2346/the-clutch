@@ -1,11 +1,11 @@
 'use client'
 
 import { useRef, useEffect, useState } from 'react'
-import { TASK_CATEGORIES, MAP_CONFIG, getCategoryColor } from '@/lib/utils'
+import { getCategoryColor } from '@/lib/utils'
+import { TASK_CATEGORIES, MAP_CONFIG } from 'shared'
 import type { Task } from 'shared'
 
-// Re-export from utils since we added it there
-import { getCategoryColor as getColor } from '@/lib/utils'
+const getColor = getCategoryColor
 
 interface TaskMapProps {
   tasks: Task[]
