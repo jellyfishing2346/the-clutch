@@ -360,6 +360,12 @@ export default function NewTaskPage() {
           </button>
         </div>
 
+        {step === 0 && (!form.title || !form.category || !form.description) && (
+          <p className="text-xs text-gray-400 text-center -mt-1">
+            Title, category, and description are required to continue.
+          </p>
+        )}
+
         {step === 0 && (
           <div className="text-center">
             <Link href="/tasks" className="text-sm text-gray-400 hover:text-gray-600 transition-colors">

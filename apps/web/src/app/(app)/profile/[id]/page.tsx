@@ -7,9 +7,8 @@ import { Avatar } from '@/components/ui/Avatar'
 import { TrustBadge } from '@/components/ui/TrustBadge'
 import { StarRating } from '@/components/ui/StarRating'
 import { TaskCard } from '@/components/tasks/TaskCard'
-import { MOCK_USERS, MOCK_TASKS, MOCK_REVIEWS } from '@/lib/mock-data'
 import { fetchProfile, fetchReviews, updateProfile } from '@/lib/api/users'
-import { fetchNearbyTasks } from '@/lib/api/tasks'
+import { fetchTasksByUser } from '@/lib/api/tasks'
 import { createClient } from '@/lib/supabase/client'
 import { formatRelativeTime } from '@/lib/utils'
 import { TRUST_LEVELS, SUPPORTED_LANGUAGES, BOROUGHS, NEIGHBORHOODS } from 'shared'
@@ -18,17 +17,13 @@ import type { UserProfile, Review, Task } from 'shared'
 export default function ProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
-  const [user, setUser] = useState<UserProfile | null>(
-    MOCK_USERS.find(u => u.id === id) ?? null
-  )
-  const [reviews, setReviews] = useState<Review[]>(
-    MOCK_REVIEWS.filter(r => r.reviewee_id === id)
-  )
-  const [postedTasks, setPostedTasks] = useState<Task[]>(
-    MOCK_TASKS.filter(t => t.creator_id === id).slice(0, 3)
-  )
+  const [user, setUser] = useState<UserProfile | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [reviews, setReviews] = useState<Review[]>([])
+  const [postedTasks, setPostedTasks] = useState<Task[]>([])
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [isEditing, setIsEditing] = useState(false)
+  const [discardWarning, setDiscardWarning] = useState(false)
   const [editForm, setEditForm] = useState({
     name: '', bio: '', borough: '', neighborhood: '', languages: [] as string[],
   })
@@ -40,18 +35,22 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
   }
 
   useEffect(() => {
-    fetchProfile(id).then(data => { if (data) setUser(data) })
-    fetchReviews(id).then(setReviews)
-    fetchNearbyTasks().then(tasks =>
-      setPostedTasks(tasks.filter(t => t.creator_id === id).slice(0, 3))
-    )
-    createClient().auth.getUser().then(({ data: { user } }) => {
-      setCurrentUserId(user?.id ?? null)
+    Promise.all([
+      fetchProfile(id),
+      fetchReviews(id),
+      fetchTasksByUser(id),
+      createClient().auth.getUser(),
+    ]).then(([profile, revs, tasks, { data: { user: authUser } }]) => {
+      setUser(profile)
+      setReviews(revs)
+      setPostedTasks(tasks.slice(0, 3))
+      setCurrentUserId(authUser?.id ?? null)
+      setLoading(false)
     })
   }, [id])
 
   useEffect(() => {
-    if (user) {
+    if (user && !isEditing) {
       setEditForm({
         name: user.name,
         bio: user.bio ?? '',
@@ -60,7 +59,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
         languages: user.languages ?? [],
       })
     }
-  }, [user])
+  }, [user, isEditing])
 
   const isDirty = user && (
     editForm.name !== user.name ||
@@ -71,8 +70,17 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
   )
 
   function handleCloseModal() {
-    if (isDirty && !confirm('Discard unsaved changes?')) return
+    if (isDirty) {
+      setDiscardWarning(true)
+      return
+    }
     setIsEditing(false)
+    setDiscardWarning(false)
+  }
+
+  function handleDiscardConfirm() {
+    setIsEditing(false)
+    setDiscardWarning(false)
   }
 
   function toggleLanguage(code: string) {
@@ -104,8 +112,31 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
         languages: editForm.languages,
       } : prev)
       setIsEditing(false)
+      setDiscardWarning(false)
     }
     setSaving(false)
+  }
+
+  if (loading) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-6">
+        <div className="h-4 w-20 bg-gray-100 rounded animate-pulse mb-5" />
+        <div className="grid md:grid-cols-3 gap-6">
+          <div className="space-y-4">
+            <div className="card p-6">
+              <div className="w-20 h-20 rounded-full bg-gray-100 animate-pulse mx-auto mb-3" />
+              <div className="h-5 w-32 bg-gray-100 rounded animate-pulse mx-auto mb-2" />
+              <div className="h-4 w-24 bg-gray-100 rounded animate-pulse mx-auto" />
+            </div>
+            <div className="h-36 card animate-pulse" />
+          </div>
+          <div className="md:col-span-2 space-y-5">
+            <div className="h-48 card animate-pulse" />
+            <div className="h-32 card animate-pulse" />
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (!user) {
@@ -270,7 +301,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
           <div className="card w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-bold text-gray-900">Edit profile</h2>
-              <button onClick={handleCloseModal} className="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
+              <button onClick={handleCloseModal} className="text-gray-400 hover:text-gray-600 text-xl leading-none" aria-label="Close">✕</button>
             </div>
 
             <form onSubmit={handleSaveProfile} className="space-y-4">
@@ -343,18 +374,40 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-2">
-                <button type="button" onClick={handleCloseModal} className="btn-secondary flex-1">
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn-primary flex-1 justify-center"
-                  disabled={saving || !editForm.name.trim()}
-                >
-                  {saving ? <><span className="animate-spin inline-block">◌</span> Saving...</> : 'Save changes'}
-                </button>
-              </div>
+              {discardWarning ? (
+                <div className="rounded-xl bg-amber-50 border border-amber-200 p-3">
+                  <p className="text-sm text-amber-800 font-medium mb-2">Discard unsaved changes?</p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setDiscardWarning(false)}
+                      className="btn-secondary flex-1 text-xs py-1.5"
+                    >
+                      Keep editing
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDiscardConfirm}
+                      className="flex-1 text-xs py-1.5 rounded-xl bg-amber-600 text-white font-medium hover:bg-amber-700 transition-colors"
+                    >
+                      Discard
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex gap-3 pt-2">
+                  <button type="button" onClick={handleCloseModal} className="btn-secondary flex-1">
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="btn-primary flex-1"
+                    disabled={saving || !editForm.name.trim()}
+                  >
+                    {saving ? <><span className="animate-spin inline-block">◌</span> Saving...</> : 'Save changes'}
+                  </button>
+                </div>
+              )}
             </form>
           </div>
         </div>

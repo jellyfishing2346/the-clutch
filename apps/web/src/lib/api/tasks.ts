@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/client'
 import type { Task, TaskCategory, PaymentType, GeoPoint } from 'shared'
-import { MOCK_TASKS } from 'shared'
+
+const IS_DEMO = !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  process.env.NEXT_PUBLIC_SUPABASE_URL.includes('your-project')
 
 interface FetchTasksOptions {
   category?: TaskCategory
@@ -11,10 +13,8 @@ interface FetchTasksOptions {
 }
 
 export async function fetchNearbyTasks(opts: FetchTasksOptions = {}): Promise<Task[]> {
+  if (IS_DEMO) return []
   const supabase = createClient()
-
-  // Use Supabase RPC if env vars are set, else fall back to mock data
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) return MOCK_TASKS
 
   let query = supabase
     .from('tasks')
@@ -28,21 +28,34 @@ export async function fetchNearbyTasks(opts: FetchTasksOptions = {}): Promise<Ta
   if (opts.borough) query = query.eq('borough', opts.borough)
 
   const { data, error } = await query
+  if (error) {
+    console.error('fetchNearbyTasks:', error.message)
+    return []
+  }
+  return data as Task[]
+}
+
+export async function fetchTasksByUser(userId: string): Promise<Task[]> {
+  if (IS_DEMO) return []
+  const supabase = createClient()
+
+  const { data, error } = await supabase
+    .from('tasks')
+    .select('*, creator:profiles(*)')
+    .eq('creator_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(10)
 
   if (error) {
-    console.warn('fetchNearbyTasks: falling back to mock data')
-    return MOCK_TASKS
+    console.error('fetchTasksByUser:', error.message)
+    return []
   }
-
   return data as Task[]
 }
 
 export async function fetchTaskById(id: string): Promise<Task | null> {
+  if (IS_DEMO) return null
   const supabase = createClient()
-
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
-    return MOCK_TASKS.find(t => t.id === id) ?? null
-  }
 
   const { data, error } = await supabase
     .from('tasks')
@@ -94,7 +107,7 @@ export async function createTask(payload: CreateTaskPayload): Promise<{ id: stri
     .single()
 
   if (error) {
-    console.warn('createTask error:', error)
+    console.error('createTask:', error.message)
     return null
   }
 

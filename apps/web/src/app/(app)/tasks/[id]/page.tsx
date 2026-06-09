@@ -6,21 +6,17 @@ import { Avatar } from '@/components/ui/Avatar'
 import { TrustBadge } from '@/components/ui/TrustBadge'
 import { StarRating } from '@/components/ui/StarRating'
 import { PaymentBadge } from '@/components/ui/PaymentBadge'
-import { MOCK_TASKS, MOCK_REVIEWS } from '@/lib/mock-data'
 import { fetchTaskById, applyToTask } from '@/lib/api/tasks'
 import { fetchReviews } from '@/lib/api/users'
 import { formatRelativeTime } from '@/lib/utils'
-import { TASK_CATEGORIES, TRUST_LEVELS } from 'shared'
+import { TASK_CATEGORIES, TRUST_LEVELS, SUPPORTED_LANGUAGES } from 'shared'
 import type { Task, Review } from 'shared'
 
 export default function TaskDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
-  const [task, setTask] = useState<Task | null>(
-    MOCK_TASKS.find(t => t.id === id) ?? null
-  )
-  const [creatorReviews, setCreatorReviews] = useState<Review[]>(
-    MOCK_REVIEWS.filter(r => r.reviewee_id === (task?.creator_id ?? '')).slice(0, 3)
-  )
+  const [task, setTask] = useState<Task | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [creatorReviews, setCreatorReviews] = useState<Review[]>([])
   const [applying, setApplying] = useState(false)
   const [applied, setApplied] = useState(false)
   const [applyError, setApplyError] = useState('')
@@ -28,14 +24,29 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
 
   useEffect(() => {
     fetchTaskById(id).then(data => {
-      if (data) {
-        setTask(data)
-        if (data.creator_id) {
-          fetchReviews(data.creator_id).then(reviews => setCreatorReviews(reviews.slice(0, 3)))
-        }
+      setTask(data)
+      setLoading(false)
+      if (data?.creator_id) {
+        fetchReviews(data.creator_id).then(reviews => setCreatorReviews(reviews.slice(0, 3)))
       }
     })
   }, [id])
+
+  if (loading) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-6">
+        <div className="h-4 w-28 bg-gray-100 rounded animate-pulse mb-5" />
+        <div className="grid md:grid-cols-3 gap-6">
+          <div className="md:col-span-2 space-y-5">
+            <div className="h-48 card animate-pulse" />
+            <div className="h-20 card animate-pulse" />
+            <div className="h-36 card animate-pulse" />
+          </div>
+          <div className="h-64 card animate-pulse" />
+        </div>
+      </div>
+    )
+  }
 
   if (!task) {
     return (
@@ -65,7 +76,6 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6">
-      {/* Back */}
       <Link href="/tasks" className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-clutch-600 mb-5 transition-colors">
         ← Back to tasks
       </Link>
@@ -191,7 +201,11 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
                 {task.creator.languages.length > 0 && (
                   <div className="flex items-center justify-between">
                     <span className="text-gray-500">Languages</span>
-                    <span className="text-xs text-gray-700">{task.creator.languages.map(l => l.toUpperCase()).join(', ')}</span>
+                    <span className="text-xs text-gray-700">
+                      {task.creator.languages.map(code =>
+                        SUPPORTED_LANGUAGES.find(l => l.code === code)?.label ?? code
+                      ).join(', ')}
+                    </span>
                   </div>
                 )}
               </div>

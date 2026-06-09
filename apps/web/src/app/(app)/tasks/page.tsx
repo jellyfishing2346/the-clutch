@@ -1,18 +1,19 @@
 'use client'
 
+import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { TaskCard } from '@/components/tasks/TaskCard'
-import { MOCK_TASKS } from '@/lib/mock-data'
 import { fetchNearbyTasks } from '@/lib/api/tasks'
 import { TASK_CATEGORIES } from 'shared'
 import type { Task, TaskCategory, PaymentType } from 'shared'
 
 type SortOrder = 'newest' | 'highest_pay'
 
-const BOROUGH_FILTERS = ['All boroughs', 'Manhattan', 'Queens', 'Brooklyn', 'Bronx']
+const BOROUGH_FILTERS = ['All boroughs', 'Manhattan', 'Queens', 'Brooklyn', 'Bronx', 'Staten Island']
 
 export default function TasksPage() {
-  const [allTasks, setAllTasks] = useState<Task[]>(MOCK_TASKS)
+  const [allTasks, setAllTasks] = useState<Task[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<TaskCategory | 'all'>('all')
   const [paymentFilter, setPaymentFilter] = useState<PaymentType | 'all'>('all')
@@ -20,7 +21,10 @@ export default function TasksPage() {
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest')
 
   useEffect(() => {
-    fetchNearbyTasks().then(data => setAllTasks(data))
+    fetchNearbyTasks().then(data => {
+      setAllTasks(data)
+      setLoading(false)
+    })
   }, [])
 
   const filtered = allTasks.filter(task => {
@@ -40,6 +44,8 @@ export default function TasksPage() {
     }
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
   })
+
+  const hasActiveFilters = search || categoryFilter !== 'all' || paymentFilter !== 'all' || boroughFilter !== 'All boroughs'
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
@@ -63,7 +69,6 @@ export default function TasksPage() {
 
       {/* Filters row */}
       <div className="flex flex-wrap gap-2 mb-6">
-        {/* Borough */}
         <select
           className="input py-2 px-3 text-sm w-auto"
           value={boroughFilter}
@@ -73,7 +78,6 @@ export default function TasksPage() {
           {BOROUGH_FILTERS.map(b => <option key={b}>{b}</option>)}
         </select>
 
-        {/* Payment */}
         <select
           className="input py-2 px-3 text-sm w-auto"
           value={paymentFilter}
@@ -87,7 +91,6 @@ export default function TasksPage() {
           <option value="free">Free</option>
         </select>
 
-        {/* Category chips */}
         <div className="flex gap-2 overflow-x-auto pb-1">
           <button
             onClick={() => setCategoryFilter('all')}
@@ -115,10 +118,13 @@ export default function TasksPage() {
         </div>
       </div>
 
-      {/* Results */}
+      {/* Results header */}
       <div className="mb-3 flex items-center justify-between">
         <span className="text-sm text-gray-500">
-          {tasks.length} task{tasks.length !== 1 ? 's' : ''} found
+          {loading
+            ? <span className="inline-block h-4 w-24 bg-gray-100 rounded animate-pulse" />
+            : `${tasks.length} task${tasks.length !== 1 ? 's' : ''} found`
+          }
         </span>
         <select
           className="text-xs text-gray-500 border border-gray-200 rounded-lg px-2 py-1 bg-white"
@@ -131,7 +137,13 @@ export default function TasksPage() {
         </select>
       </div>
 
-      {tasks.length > 0 ? (
+      {loading ? (
+        <div className="grid md:grid-cols-2 gap-4">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="h-36 bg-gray-100 rounded-2xl animate-pulse" />
+          ))}
+        </div>
+      ) : tasks.length > 0 ? (
         <div className="grid md:grid-cols-2 gap-4">
           {tasks.map(task => (
             <TaskCard key={task.id} task={task} />
@@ -139,9 +151,16 @@ export default function TasksPage() {
         </div>
       ) : (
         <div className="text-center py-16">
-          <div className="text-5xl mb-4">🔍</div>
-          <p className="text-gray-500 font-medium">No tasks match your filters.</p>
-          <p className="text-sm text-gray-400 mt-1">Try adjusting your search or filters.</p>
+          <div className="text-5xl mb-4">{hasActiveFilters ? '🔍' : '✨'}</div>
+          <p className="text-gray-500 font-medium">
+            {hasActiveFilters ? 'No tasks match your filters.' : 'No open tasks right now.'}
+          </p>
+          <p className="text-sm text-gray-400 mt-1">
+            {hasActiveFilters ? 'Try adjusting your search or filters.' : 'Be the first to post something!'}
+          </p>
+          <Link href="/tasks/new" className="btn-primary mt-5 inline-flex">
+            Post a task
+          </Link>
         </div>
       )}
     </div>

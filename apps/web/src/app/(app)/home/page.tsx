@@ -4,19 +4,26 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { TaskMap } from '@/components/map/TaskMap'
 import { TaskCard } from '@/components/tasks/TaskCard'
-import { MOCK_TASKS, MOCK_USERS } from '@/lib/mock-data'
 import { fetchNearbyTasks } from '@/lib/api/tasks'
+import { fetchCreditsBalance } from '@/lib/api/credits'
+import { createClient } from '@/lib/supabase/client'
 import type { Task } from 'shared'
 
-const ME = MOCK_USERS[0]
-
 export default function AppHomePage() {
-  const [tasks, setTasks] = useState<Task[]>(MOCK_TASKS)
+  const [tasks, setTasks] = useState<Task[]>([])
+  const [loading, setLoading] = useState(true)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [filter, setFilter] = useState<string>('all')
+  const [credits, setCredits] = useState<number | null>(null)
 
   useEffect(() => {
-    fetchNearbyTasks().then(data => setTasks(data))
+    fetchNearbyTasks().then(data => {
+      setTasks(data)
+      setLoading(false)
+    })
+    createClient().auth.getUser().then(({ data: { user } }) => {
+      if (user) fetchCreditsBalance(user.id).then(setCredits)
+    })
   }, [])
 
   const filtered = filter === 'all'
@@ -29,7 +36,9 @@ export default function AppHomePage() {
       <aside className="w-full md:w-96 md:shrink-0 flex flex-col bg-white border-r border-gray-100 overflow-hidden">
         {/* Credits banner */}
         <div className="px-4 py-3 gradient-brand text-white text-sm flex items-center justify-between">
-          <span className="font-medium">◈ {ME.credits_balance} credits</span>
+          <span className="font-medium">
+            ◈ {credits !== null ? credits : <span className="opacity-60">—</span>} credits
+          </span>
           <Link href="/credits" className="text-white/80 hover:text-white text-xs underline">Earn more</Link>
         </div>
 
@@ -59,19 +68,39 @@ export default function AppHomePage() {
 
         {/* Task list */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          <div className="flex items-center justify-between mb-1">
-            <h2 className="font-semibold text-gray-900">{filtered.length} tasks nearby</h2>
-            <span className="text-xs text-gray-400">Manhattan & Queens</span>
-          </div>
-          {filtered.map(task => (
-            <div
-              key={task.id}
-              className={`transition-all ${selectedTask?.id === task.id ? 'ring-2 ring-clutch-400 rounded-2xl' : ''}`}
-              onClick={() => setSelectedTask(task)}
-            >
-              <TaskCard task={task} compact />
-            </div>
-          ))}
+          {loading ? (
+            <>
+              <div className="h-5 w-28 bg-gray-100 rounded animate-pulse mb-2" />
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="h-24 bg-gray-100 rounded-2xl animate-pulse" />
+              ))}
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-between mb-1">
+                <h2 className="font-semibold text-gray-900">{filtered.length} tasks nearby</h2>
+                <span className="text-xs text-gray-400">NYC</span>
+              </div>
+              {filtered.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-sm text-gray-400">No tasks found.</p>
+                  <Link href="/tasks/new" className="text-xs text-clutch-600 hover:underline mt-1 inline-block">
+                    Post the first one →
+                  </Link>
+                </div>
+              ) : (
+                filtered.map(task => (
+                  <div
+                    key={task.id}
+                    className={`transition-all ${selectedTask?.id === task.id ? 'ring-2 ring-clutch-400 rounded-2xl' : ''}`}
+                    onClick={() => setSelectedTask(task)}
+                  >
+                    <TaskCard task={task} compact />
+                  </div>
+                ))
+              )}
+            </>
+          )}
         </div>
       </aside>
 

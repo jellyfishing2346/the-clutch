@@ -84,7 +84,7 @@ export function Navbar() {
       </header>
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 px-2 py-1 safe-area-bottom">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 px-2 pt-1" style={{ paddingBottom: 'max(0.25rem, env(safe-area-inset-bottom))' }}>
         <div className="flex items-center justify-around">
           {NAV_ITEMS.map(item => {
             const href = item.href === '/profile' ? profileHref : item.href
