@@ -1,4 +1,4 @@
-import type { Task, UserProfile, Review, CreditsTransaction } from 'shared'
+import type { Task, UserProfile, Review, CreditsTransaction } from './types'
 
 export const MOCK_USERS: UserProfile[] = [
   {
