@@ -1,0 +1,52 @@
+import { createClient } from '@/lib/supabase/client'
+import type { UserProfile, Review } from 'shared'
+import { MOCK_USERS, MOCK_REVIEWS } from 'shared'
+
+export async function fetchProfile(userId: string): Promise<UserProfile | null> {
+  const supabase = createClient()
+
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    return MOCK_USERS.find(u => u.id === userId) ?? null
+  }
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', userId)
+    .single()
+
+  if (error) return null
+  return data as UserProfile
+}
+
+export async function fetchReviews(userId: string): Promise<Review[]> {
+  const supabase = createClient()
+
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    return MOCK_REVIEWS.filter(r => r.reviewee_id === userId)
+  }
+
+  const { data, error } = await supabase
+    .from('reviews')
+    .select('*, reviewer:profiles(*)')
+    .eq('reviewee_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(20)
+
+  if (error) return []
+  return data as Review[]
+}
+
+export async function updateProfile(updates: Partial<UserProfile>): Promise<boolean> {
+  const supabase = createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return false
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', user.id)
+
+  return !error
+}
