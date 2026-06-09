@@ -1,32 +1,58 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, use } from 'react'
 import Link from 'next/link'
-import { notFound } from 'next/navigation'
 import { Avatar } from '@/components/ui/Avatar'
 import { TrustBadge } from '@/components/ui/TrustBadge'
 import { StarRating } from '@/components/ui/StarRating'
 import { PaymentBadge } from '@/components/ui/PaymentBadge'
 import { MOCK_TASKS, MOCK_REVIEWS } from '@/lib/mock-data'
+import { fetchTaskById, applyToTask } from '@/lib/api/tasks'
+import { fetchReviews } from '@/lib/api/users'
 import { formatRelativeTime } from '@/lib/utils'
 import { TASK_CATEGORIES, TRUST_LEVELS } from 'shared'
+import type { Task, Review } from 'shared'
 
-export default function TaskDetailPage({ params }: { params: { id: string } }) {
-  const task = MOCK_TASKS.find(t => t.id === params.id)
-  if (!task) notFound()
-
+export default function TaskDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
+  const [task, setTask] = useState<Task | null>(
+    MOCK_TASKS.find(t => t.id === id) ?? null
+  )
+  const [creatorReviews, setCreatorReviews] = useState<Review[]>(
+    MOCK_REVIEWS.filter(r => r.reviewee_id === (task?.creator_id ?? '')).slice(0, 3)
+  )
   const [applying, setApplying] = useState(false)
   const [applied, setApplied] = useState(false)
   const [message, setMessage] = useState('')
 
+  useEffect(() => {
+    fetchTaskById(id).then(data => {
+      if (data) {
+        setTask(data)
+        if (data.creator_id) {
+          fetchReviews(data.creator_id).then(reviews => setCreatorReviews(reviews.slice(0, 3)))
+        }
+      }
+    })
+  }, [id])
+
+  if (!task) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-16 text-center">
+        <p className="text-gray-500">Task not found.</p>
+        <Link href="/tasks" className="text-clutch-600 hover:underline text-sm mt-2 inline-block">← Back to tasks</Link>
+      </div>
+    )
+  }
+
   const category = TASK_CATEGORIES[task.category]
   const trustInfo = TRUST_LEVELS[task.required_trust_level]
-  const creatorReviews = MOCK_REVIEWS.filter(r => r.reviewee_id === task.creator_id).slice(0, 3)
 
   async function handleApply(e: React.FormEvent) {
     e.preventDefault()
+    if (!task) return
     setApplying(true)
-    await new Promise(r => setTimeout(r, 800))
+    await applyToTask(task.id, message)
     setApplied(true)
     setApplying(false)
   }

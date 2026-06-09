@@ -1,21 +1,27 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { TaskMap } from '@/components/map/TaskMap'
 import { TaskCard } from '@/components/tasks/TaskCard'
 import { MOCK_TASKS, MOCK_USERS } from '@/lib/mock-data'
+import { fetchNearbyTasks } from '@/lib/api/tasks'
 import type { Task } from 'shared'
 
 const ME = MOCK_USERS[0]
 
 export default function AppHomePage() {
+  const [tasks, setTasks] = useState<Task[]>(MOCK_TASKS)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [filter, setFilter] = useState<string>('all')
 
+  useEffect(() => {
+    fetchNearbyTasks().then(data => setTasks(data))
+  }, [])
+
   const filtered = filter === 'all'
-    ? MOCK_TASKS
-    : MOCK_TASKS.filter(t => t.payment_type === filter || t.category === filter)
+    ? tasks
+    : tasks.filter(t => t.payment_type === filter || t.category === filter)
 
   return (
     <div className="flex flex-col md:flex-row h-[calc(100vh-4rem)] overflow-hidden">

@@ -16,16 +16,21 @@ export async function fetchNearbyTasks(opts: FetchTasksOptions = {}): Promise<Ta
   // Use Supabase RPC if env vars are set, else fall back to mock data
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) return MOCK_TASKS
 
-  const { data, error } = await supabase.rpc('tasks_nearby', {
-    lat: opts.near?.lat ?? 40.7831,
-    lng: opts.near?.lng ?? -73.9712,
-    radius_km: opts.radiusKm ?? 2,
-    p_category: opts.category ?? null,
-    p_payment: opts.paymentType ?? null,
-  })
+  let query = supabase
+    .from('tasks')
+    .select('*, creator:profiles(*)')
+    .eq('status', 'open')
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  if (opts.category) query = query.eq('category', opts.category)
+  if (opts.paymentType) query = query.eq('payment_type', opts.paymentType)
+  if (opts.borough) query = query.eq('borough', opts.borough)
+
+  const { data, error } = await query
 
   if (error) {
-    console.error('fetchNearbyTasks error:', error)
+    console.warn('fetchNearbyTasks: falling back to mock data')
     return MOCK_TASKS
   }
 
@@ -89,7 +94,7 @@ export async function createTask(payload: CreateTaskPayload): Promise<{ id: stri
     .single()
 
   if (error) {
-    console.error('createTask error:', error)
+    console.warn('createTask error:', error)
     return null
   }
 

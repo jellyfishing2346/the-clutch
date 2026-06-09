@@ -1,9 +1,13 @@
 'use client'
 
 import Link from 'next/link'
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import { MOCK_USERS, MOCK_TRANSACTIONS } from '@/lib/mock-data'
+import { fetchCreditsBalance, fetchTransactions } from '@/lib/api/credits'
 import { formatRelativeTime } from '@/lib/utils'
 import { CREDITS_CONFIG } from 'shared'
+import type { CreditsTransaction } from 'shared'
 
 const ME = MOCK_USERS[0]
 
@@ -21,9 +25,23 @@ const HOW_TO_SPEND = [
 ]
 
 export default function CreditsPage() {
-  const allTransactions = [...MOCK_TRANSACTIONS].sort(
-    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  const [balance, setBalance] = useState(ME.credits_balance)
+  const [transactions, setTransactions] = useState<CreditsTransaction[]>(
+    [...MOCK_TRANSACTIONS].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   )
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      const userId = user?.id ?? ME.id
+      fetchCreditsBalance(userId).then(setBalance)
+      fetchTransactions(userId).then(txns =>
+        setTransactions([...txns].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()))
+      )
+    })
+  }, [])
+
+  const allTransactions = transactions
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6">
@@ -32,7 +50,7 @@ export default function CreditsPage() {
 
       {/* Balance card */}
       <div className="gradient-brand rounded-3xl p-8 text-white text-center mb-6 shadow-lg">
-        <div className="text-6xl font-bold mb-1">{ME.credits_balance}</div>
+        <div className="text-6xl font-bold mb-1">{balance}</div>
         <div className="text-clutch-100 text-sm font-medium">Clutch Credits</div>
         <div className="mt-4 flex justify-center gap-4 text-xs text-white/80">
           <span>↑ Earned this month: 30 CR</span>

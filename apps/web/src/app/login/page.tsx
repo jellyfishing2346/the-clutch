@@ -98,14 +98,16 @@ export default function LoginPage() {
             </Link>
           </div>
 
-          <div className="mt-4 pt-4 border-t border-gray-100 text-center">
-            <button
-              onClick={() => router.push('/home')}
-              className="text-xs text-gray-400 hover:text-clutch-500 transition-colors"
-            >
-              Demo mode: skip login →
-            </button>
-          </div>
+          {IS_DEMO && (
+            <div className="mt-4 pt-4 border-t border-gray-100 text-center">
+              <button
+                onClick={() => router.push('/home')}
+                className="text-xs text-gray-400 hover:text-clutch-500 transition-colors"
+              >
+                Demo mode: skip login →
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

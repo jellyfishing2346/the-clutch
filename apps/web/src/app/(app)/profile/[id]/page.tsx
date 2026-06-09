@@ -1,22 +1,48 @@
 'use client'
 
-import { notFound } from 'next/navigation'
+import { useState, useEffect, use } from 'react'
 import Link from 'next/link'
 import { Avatar } from '@/components/ui/Avatar'
 import { TrustBadge } from '@/components/ui/TrustBadge'
 import { StarRating } from '@/components/ui/StarRating'
 import { TaskCard } from '@/components/tasks/TaskCard'
 import { MOCK_USERS, MOCK_TASKS, MOCK_REVIEWS } from '@/lib/mock-data'
+import { fetchProfile, fetchReviews } from '@/lib/api/users'
+import { fetchNearbyTasks } from '@/lib/api/tasks'
 import { formatRelativeTime } from '@/lib/utils'
 import { TRUST_LEVELS, SUPPORTED_LANGUAGES } from 'shared'
+import type { UserProfile, Review, Task } from 'shared'
 
-export default function ProfilePage({ params }: { params: { id: string } }) {
-  const user = MOCK_USERS.find(u => u.id === params.id)
-  if (!user) notFound()
+export default function ProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
+  const [user, setUser] = useState<UserProfile | null>(
+    MOCK_USERS.find(u => u.id === id) ?? null
+  )
+  const [reviews, setReviews] = useState<Review[]>(
+    MOCK_REVIEWS.filter(r => r.reviewee_id === id)
+  )
+  const [completedTasks, setCompletedTasks] = useState<Task[]>(
+    MOCK_TASKS.filter(t => t.creator_id === id).slice(0, 3)
+  )
+
+  useEffect(() => {
+    fetchProfile(id).then(data => { if (data) setUser(data) })
+    fetchReviews(id).then(setReviews)
+    fetchNearbyTasks().then(tasks =>
+      setCompletedTasks(tasks.filter(t => t.creator_id === id).slice(0, 3))
+    )
+  }, [id])
+
+  if (!user) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-16 text-center">
+        <p className="text-gray-500">User not found.</p>
+        <Link href="/home" className="text-clutch-600 hover:underline text-sm mt-2 inline-block">← Back</Link>
+      </div>
+    )
+  }
 
   const isMe = user.id === 'u1'
-  const completedTasks = MOCK_TASKS.filter(t => t.creator_id === user.id).slice(0, 3)
-  const reviews = MOCK_REVIEWS.filter(r => r.reviewee_id === user.id)
   const trustInfo = TRUST_LEVELS[user.trust_level]
 
   const langLabels = user.languages.map(

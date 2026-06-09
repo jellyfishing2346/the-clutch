@@ -1,20 +1,26 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { TaskCard } from '@/components/tasks/TaskCard'
 import { MOCK_TASKS } from '@/lib/mock-data'
+import { fetchNearbyTasks } from '@/lib/api/tasks'
 import { TASK_CATEGORIES } from 'shared'
-import type { TaskCategory, PaymentType } from 'shared'
+import type { Task, TaskCategory, PaymentType } from 'shared'
 
 const BOROUGH_FILTERS = ['All boroughs', 'Manhattan', 'Queens', 'Brooklyn', 'Bronx']
 
 export default function TasksPage() {
+  const [allTasks, setAllTasks] = useState<Task[]>(MOCK_TASKS)
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<TaskCategory | 'all'>('all')
   const [paymentFilter, setPaymentFilter] = useState<PaymentType | 'all'>('all')
   const [boroughFilter, setBoroughFilter] = useState('All boroughs')
 
-  const tasks = MOCK_TASKS.filter(task => {
+  useEffect(() => {
+    fetchNearbyTasks().then(data => setAllTasks(data))
+  }, [])
+
+  const tasks = allTasks.filter(task => {
     const matchesSearch = !search || task.title.toLowerCase().includes(search.toLowerCase()) ||
       task.description.toLowerCase().includes(search.toLowerCase())
     const matchesCategory = categoryFilter === 'all' || task.category === categoryFilter

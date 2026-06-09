@@ -17,6 +17,7 @@ interface TaskMapProps {
 export function TaskMap({ tasks, onTaskSelect, selectedTaskId, height = '100%' }: TaskMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null)
   const mapRef = useRef<unknown>(null)
+  const markerEls = useRef<Map<string, HTMLDivElement>>(new Map())
   const [mapLoaded, setMapLoaded] = useState(false)
   const [mapError, setMapError] = useState(false)
 
@@ -25,7 +26,7 @@ export function TaskMap({ tasks, onTaskSelect, selectedTaskId, height = '100%' }
 
     const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 
-    if (!token) {
+    if (!token || token.includes('eyJ1IjoieW91')) {
       setMapError(true)
       return
     }
@@ -80,6 +81,7 @@ export function TaskMap({ tasks, onTaskSelect, selectedTaskId, height = '100%' }
             el.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)'
           })
 
+          markerEls.current.set(task.id, el)
           new mapboxgl.Marker(el)
             .setLngLat([task.location.lng, task.location.lat])
             .addTo(map)
@@ -97,6 +99,20 @@ export function TaskMap({ tasks, onTaskSelect, selectedTaskId, height = '100%' }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  useEffect(() => {
+    markerEls.current.forEach((el, id) => {
+      if (id === selectedTaskId) {
+        el.style.transform = 'rotate(-45deg) scale(1.3)'
+        el.style.boxShadow = '0 6px 20px rgba(0,0,0,0.35)'
+        el.style.zIndex = '10'
+      } else {
+        el.style.transform = 'rotate(-45deg)'
+        el.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)'
+        el.style.zIndex = ''
+      }
+    })
+  }, [selectedTaskId])
 
   if (mapError) {
     return (
@@ -117,11 +133,14 @@ export function TaskMap({ tasks, onTaskSelect, selectedTaskId, height = '100%' }
               <button
                 key={task.id}
                 onClick={() => onTaskSelect?.(task)}
-                className="absolute w-8 h-8 rounded-full border-2 border-white shadow-md flex items-center justify-center text-xs hover:scale-110 transition-transform"
+                className="absolute w-8 h-8 rounded-full border-2 border-white shadow-md flex items-center justify-center text-xs transition-transform"
                 style={{
                   background: getColor(task.category),
                   left: `${15 + (i * 23) % 65}%`,
                   top: `${20 + (i * 31) % 55}%`,
+                  transform: selectedTaskId === task.id ? 'scale(1.3)' : 'scale(1)',
+                  boxShadow: selectedTaskId === task.id ? '0 6px 20px rgba(0,0,0,0.35)' : undefined,
+                  zIndex: selectedTaskId === task.id ? 10 : undefined,
                 }}
                 title={task.title}
               >
