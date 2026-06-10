@@ -23,13 +23,17 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
   const [message, setMessage] = useState('')
 
   useEffect(() => {
-    fetchTaskById(id).then(data => {
-      setTask(data)
-      setLoading(false)
-      if (data?.creator_id) {
-        fetchReviews(data.creator_id).then(reviews => setCreatorReviews(reviews.slice(0, 3)))
-      }
-    })
+    fetchTaskById(id)
+      .then(data => {
+        setTask(data)
+        if (data?.creator_id) {
+          fetchReviews(data.creator_id)
+            .then(reviews => setCreatorReviews(reviews.slice(0, 3)))
+            .catch(console.error)
+        }
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false))
   }, [id])
 
   if (loading) {

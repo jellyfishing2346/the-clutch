@@ -45,8 +45,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
       setReviews(revs)
       setPostedTasks(tasks.slice(0, 3))
       setCurrentUserId(authUser?.id ?? null)
-      setLoading(false)
-    })
+    }).catch(console.error).finally(() => setLoading(false))
   }, [id])
 
   useEffect(() => {

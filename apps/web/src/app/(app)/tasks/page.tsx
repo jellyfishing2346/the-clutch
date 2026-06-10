@@ -21,10 +21,10 @@ export default function TasksPage() {
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest')
 
   useEffect(() => {
-    fetchNearbyTasks().then(data => {
-      setAllTasks(data)
-      setLoading(false)
-    })
+    fetchNearbyTasks()
+      .then(data => setAllTasks(data))
+      .catch(console.error)
+      .finally(() => setLoading(false))
   }, [])
 
   const filtered = allTasks.filter(task => {

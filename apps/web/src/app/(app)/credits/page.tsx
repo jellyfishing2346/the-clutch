@@ -35,9 +35,8 @@ export default function CreditsPage() {
       ]).then(([bal, txns]) => {
         setBalance(bal)
         setTransactions([...txns].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()))
-        setLoading(false)
-      })
-    })
+      }).catch(console.error).finally(() => setLoading(false))
+    }).catch(() => setLoading(false))
   }, [])
 
   const now = new Date()

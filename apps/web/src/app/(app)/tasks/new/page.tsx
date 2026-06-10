@@ -243,6 +243,7 @@ export default function NewTaskPage() {
                 type="datetime-local"
                 className="input"
                 value={form.scheduledFor}
+                min={new Date(Date.now() + 60_000).toISOString().slice(0, 16)}
                 onChange={e => update('scheduledFor', e.target.value)}
               />
             </div>
@@ -288,7 +289,7 @@ export default function NewTaskPage() {
                     type="number"
                     className="input pl-8"
                     placeholder="0.00"
-                    min="0"
+                    min="1"
                     step="0.50"
                     value={form.cashAmount}
                     onChange={e => update('cashAmount', e.target.value)}

@@ -17,12 +17,12 @@ export default function AppHomePage() {
   const [credits, setCredits] = useState<number | null>(null)
 
   useEffect(() => {
-    fetchNearbyTasks().then(data => {
-      setTasks(data)
-      setLoading(false)
-    })
+    fetchNearbyTasks()
+      .then(data => setTasks(data))
+      .catch(console.error)
+      .finally(() => setLoading(false))
     createClient().auth.getUser().then(({ data: { user } }) => {
-      if (user) fetchCreditsBalance(user.id).then(setCredits)
+      if (user) fetchCreditsBalance(user.id).then(setCredits).catch(console.error)
     })
   }, [])
 
