@@ -6,10 +6,6 @@
     "apps/*",
     "packages/*"
   ],
-  "overrides": {
-    "react": "18.3.1",
-    "react-dom": "18.3.1"
-  },
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
@@ -20,16 +16,12 @@
     "build:web": "turbo build --filter=web"
   },
   "devDependencies": {
-    "prettier": "^3.2.5",
     "turbo": "^2.0.0",
+    "prettier": "^3.2.5",
     "typescript": "^5.4.5"
   },
   "engines": {
     "node": ">=18"
   },
-  "packageManager": "npm@10.8.2",
-  "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
-  }
+  "packageManager": "npm@10.8.2"
 }
