@@ -1,5 +1,6 @@
 'use client'
 
+import 'mapbox-gl/dist/mapbox-gl.css'
 import { useRef, useEffect, useState } from 'react'
 import { getCategoryColor } from '@/lib/utils'
 import { TASK_CATEGORIES, MAP_CONFIG } from 'shared'
