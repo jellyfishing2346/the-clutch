@@ -13,6 +13,7 @@ Clutch is a hyperlocal task-sharing platform built for New York City — connect
 ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
 ![Mapbox](https://img.shields.io/badge/Mapbox-000000?style=for-the-badge&logo=mapbox&logoColor=white)
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
 
 <br />
 
@@ -422,10 +423,13 @@ The data model and types already support these features. Building them is the ne
 
 ## ✦ Contributing
 
-1. Fork the repo
-2. Create a branch: `git checkout -b feature/your-feature`
-3. Run `npm run typecheck` before committing
-4. Open a pull request with a clear description of what and why
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide — branching conventions, code standards, and what we will and won't merge.
+
+---
+
+## ✦ License
+
+MIT — see [LICENSE](LICENSE) for details.
 
 ---
 
