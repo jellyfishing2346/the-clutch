@@ -9,6 +9,33 @@ import { fetchCreditsBalance } from '@/lib/api/credits'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 
+const STEP_TIPS = [
+  {
+    heading: 'Writing a great task',
+    tips: [
+      { icon: '✏️', text: 'Keep the title short and specific — "Help carry groceries" beats "Need assistance".' },
+      { icon: '📋', text: 'In the description, mention how long it might take and anything the helper should bring or know.' },
+      { icon: '🏷️', text: 'Pick the closest category — it determines what trust level your helper needs.' },
+    ],
+  },
+  {
+    heading: 'Location & timing tips',
+    tips: [
+      { icon: '📍', text: 'Use a nearby landmark instead of your exact address — it\'s only shared after you accept a helper.' },
+      { icon: '🕐', text: 'Set a realistic time window. Flexible tasks ("anytime this week") tend to get more offers.' },
+      { icon: '🗺️', text: 'Pick the right borough and neighborhood so neighbors nearby can find you easily.' },
+    ],
+  },
+  {
+    heading: 'Choosing how to pay',
+    tips: [
+      { icon: '◈', text: 'Credits tasks get more responses — helpers earn them back by helping others.' },
+      { icon: '♥', text: 'Free (community) tasks are great for quick favors. Helpers earn 10 credits automatically.' },
+      { icon: '💵', text: 'Cash works well for longer or skilled tasks where fair pay matters most.' },
+    ],
+  },
+]
+
 const BOROUGH_COORDS: Record<string, { lat: number; lng: number }> = {
   Manhattan:     { lat: 40.7831, lng: -73.9712 },
   Brooklyn:      { lat: 40.6782, lng: -73.9442 },
@@ -106,12 +133,17 @@ export default function NewTaskPage() {
     )
   }
 
+  const tips = STEP_TIPS[step]
+
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
+    <div className="max-w-5xl mx-auto px-4 py-6">
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-1">Post a task</h1>
         <p className="text-gray-500 text-sm">Describe what you need help with.</p>
       </div>
+
+      <div className="flex gap-6 items-start">
+        <div className="flex-1 min-w-0">
 
       {/* Progress */}
       <div className="flex gap-2 mb-8">
@@ -374,7 +406,26 @@ export default function NewTaskPage() {
             </Link>
           </div>
         )}
-      </form>
+        </form>
+        </div>
+
+        <aside className="hidden lg:block w-64 shrink-0 sticky top-24">
+          <div className="card p-5 bg-orange-50/60 border-orange-100">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-lg">💡</span>
+              <h3 className="font-semibold text-gray-900 text-sm">{tips.heading}</h3>
+            </div>
+            <ul className="space-y-3">
+              {tips.tips.map(tip => (
+                <li key={tip.text} className="flex gap-2.5 text-xs text-gray-500 leading-relaxed">
+                  <span className="text-base shrink-0 mt-0.5">{tip.icon}</span>
+                  <span>{tip.text}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </aside>
+      </div>
     </div>
   )
 }

@@ -30,7 +30,11 @@ export default function LoginPage() {
     const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
 
     if (authError) {
-      setError(authError.message)
+      if (authError.message.toLowerCase().includes('email not confirmed')) {
+        setError('Your email address hasn\'t been confirmed yet. Check your inbox for the confirmation link we sent when you signed up.')
+      } else {
+        setError(authError.message)
+      }
       setLoading(false)
       return
     }
@@ -42,7 +46,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-clutch-50 via-white to-purple-50 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Link href="/" className="text-3xl font-bold text-gradient">Clutch</Link>
+          <Link href="/" className="logo-frame text-3xl">Clutch</Link>
           <p className="text-gray-500 mt-2">Welcome back, neighbor.</p>
         </div>
 

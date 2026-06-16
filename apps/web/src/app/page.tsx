@@ -30,15 +30,16 @@ const HOW_IT_WORKS = [
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-white font-poppins">
+    <div className="min-h-screen font-poppins" style={{ backgroundColor: '#fdfaf5' }}>
       {/* Nav */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur border-b border-gray-100">
+      <header className="fixed top-0 left-0 right-0 z-50 bg-[#fdfaf5]/95 backdrop-blur border-b border-purple-100">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <span className="text-xl font-bold text-gradient">Clutch</span>
+          <span className="logo-frame text-xl">Clutch</span>
           <nav className="hidden md:flex items-center gap-6 text-sm text-gray-600">
             <a href="#how-it-works" className="hover:text-clutch-600 transition-colors">How it works</a>
             <a href="#categories" className="hover:text-clutch-600 transition-colors">Categories</a>
             <a href="#community" className="hover:text-clutch-600 transition-colors">Community</a>
+            <Link href="/about" className="hover:text-clutch-600 transition-colors">About</Link>
           </nav>
           <div className="flex items-center gap-3">
             <Link href="/login" className="btn-ghost text-sm py-2">Sign in</Link>
@@ -48,7 +49,7 @@ export default function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="pt-24 pb-20 px-4 bg-gradient-to-br from-clutch-50 via-white to-purple-50">
+      <section className="pt-24 pb-20 px-4 bg-gradient-to-br from-orange-50 via-amber-50 to-rose-50">
         <div className="max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-clutch-100 text-clutch-700 px-4 py-1.5 rounded-full text-sm font-medium mb-6">
             <span>🗽</span> Building community across NYC neighborhoods
@@ -83,7 +84,7 @@ export default function LandingPage() {
       </section>
 
       {/* How it works */}
-      <section id="how-it-works" className="py-20 px-4 bg-white">
+      <section id="how-it-works" className="py-20 px-4 bg-[#fdfaf5]">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-3">How Clutch works</h2>
           <p className="text-center text-gray-500 mb-14 text-lg">Three simple steps to get or give help.</p>
@@ -102,7 +103,7 @@ export default function LandingPage() {
       </section>
 
       {/* Categories */}
-      <section id="categories" className="py-20 px-4 bg-gray-50">
+      <section id="categories" className="py-20 px-4 bg-orange-50">
         <div className="max-w-5xl mx-auto">
           <h2 className="text-3xl font-bold text-center text-gray-900 mb-3">What can Clutch help with?</h2>
           <p className="text-center text-gray-500 mb-14 text-lg">From simple favors to skilled work — all in your neighborhood.</p>
@@ -122,7 +123,7 @@ export default function LandingPage() {
       </section>
 
       {/* Trust section */}
-      <section id="community" className="py-20 px-4 bg-white">
+      <section id="community" className="py-20 px-4 bg-[#fdfaf5]">
         <div className="max-w-4xl mx-auto">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
@@ -148,7 +149,7 @@ export default function LandingPage() {
                 ))}
               </div>
             </div>
-            <div className="bg-gradient-to-br from-clutch-50 to-purple-50 rounded-3xl p-8">
+            <div className="bg-gradient-to-br from-orange-50 to-rose-50 rounded-3xl p-8">
               <div className="space-y-4">
                 {[
                   { name: 'Maria S.', task: 'Helped carry groceries', rating: 5, badge: '★ Trusted' },
@@ -170,29 +171,17 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Credits section */}
-      <section className="py-20 px-4 bg-gradient-to-br from-clutch-600 to-purple-700 text-white">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="text-4xl mb-4">◈</div>
-          <h2 className="text-3xl font-bold mb-4">Earn credits. Pay it forward.</h2>
-          <p className="text-clutch-100 text-lg mb-8 leading-relaxed">
-            Help someone for free and earn Clutch Credits. Spend them when you need help.
-            It's a community economy built on neighbors caring for neighbors.
-          </p>
-          <div className="grid grid-cols-3 gap-6 mb-10">
-            {[
-              { icon: '🤝', label: 'Help a neighbor', value: '+10 CR' },
-              { icon: '🎁', label: 'Welcome bonus', value: '+20 CR' },
-              { icon: '📮', label: 'Post a task', value: '-5 to -30 CR' },
-            ].map(item => (
-              <div key={item.label} className="text-center">
-                <div className="text-3xl mb-2">{item.icon}</div>
-                <div className="text-sm text-clutch-200">{item.label}</div>
-                <div className="text-lg font-bold mt-1">{item.value}</div>
-              </div>
-            ))}
+      {/* Credits — compact banner */}
+      <section className="py-8 px-4 gradient-brand text-white">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <span className="text-3xl shrink-0">◈</span>
+            <div>
+              <div className="font-bold text-base">Earn credits. Pay it forward.</div>
+              <div className="text-white/80 text-sm">Help a neighbor → +10 CR &nbsp;·&nbsp; Welcome bonus → +20 CR free</div>
+            </div>
           </div>
-          <Link href="/signup" className="inline-block bg-white text-clutch-700 font-semibold px-8 py-4 rounded-2xl hover:bg-clutch-50 transition-colors">
+          <Link href="/signup" className="shrink-0 bg-white text-clutch-700 font-semibold px-5 py-2.5 rounded-xl hover:bg-orange-50 transition-colors text-sm whitespace-nowrap">
             Get 20 free credits →
           </Link>
         </div>
@@ -206,6 +195,7 @@ export default function LandingPage() {
             <span className="ml-2">— Neighbors helping neighbors across NYC.</span>
           </div>
           <div className="flex gap-6">
+            <Link href="/about" className="hover:text-white transition-colors">About</Link>
             <Link href="/tasks" className="hover:text-white transition-colors">Browse Tasks</Link>
             <Link href="/signup" className="hover:text-white transition-colors">Sign Up</Link>
             <Link href="/login" className="hover:text-white transition-colors">Sign In</Link>

@@ -7,16 +7,17 @@
 @layer base {
   :root {
     --radius: 0.75rem;
-    --background: 0 0% 100%;
+    --background: 255 251 235;
     --foreground: 240 10% 3.9%;
-    --clutch-primary: 243 91% 64%;
-    --clutch-secondary: 270 91% 65%;
+    --clutch-primary: 24 95% 53%;
+    --clutch-secondary: 343 89% 49%;
   }
 
   /* Removed: * { @apply border-border; } — no --border variable defined */
 
   body {
-    @apply bg-white text-gray-900 font-poppins antialiased;
+    @apply text-gray-900 font-poppins antialiased;
+    background-color: #fdfaf5;
   }
 
   *:focus-visible {
@@ -30,7 +31,11 @@
   }
 
   .gradient-brand {
-    @apply bg-gradient-to-r from-clutch-600 to-purple-600;
+    @apply bg-gradient-to-r from-clutch-600 to-purple-700;
+  }
+
+  .logo-frame {
+    @apply bg-purple-100 text-clutch-700 px-2.5 py-0.5 rounded-lg font-bold tracking-tight;
   }
 
   .card {

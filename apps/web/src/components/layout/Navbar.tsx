@@ -10,11 +10,11 @@ import { fetchProfile } from '@/lib/api/users'
 import type { UserProfile } from 'shared'
 
 const NAV_ITEMS = [
-  { href: '/home', label: 'Map', icon: '🗺️' },
-  { href: '/tasks', label: 'Tasks', icon: '📋' },
-  { href: '/tasks/new', label: 'Post', icon: '＋', highlight: true },
-  { href: '/credits', label: 'Credits', icon: '◈' },
-  { href: '/profile', label: 'Profile', icon: '👤' },
+  { href: '/home',      label: 'Map',       icon: '🗺️' },
+  { href: '/tasks',     label: 'Tasks',     icon: '📋' },
+  { href: '/tasks/new', label: 'Post',      icon: '＋', highlight: true },
+  { href: '/community', label: 'Community', icon: '🏘️' },
+  { href: '/profile',   label: 'Profile',   icon: '👤' },
 ]
 
 export function Navbar() {
@@ -43,10 +43,10 @@ export function Navbar() {
   return (
     <>
       {/* Desktop top nav */}
-      <header className="hidden md:flex fixed top-0 left-0 right-0 z-50 h-16 bg-white/95 backdrop-blur border-b border-gray-100 px-6 items-center justify-between">
-        <Link href="/home" className="flex items-center gap-2 font-bold text-xl">
-          <span className="text-gradient">Clutch</span>
-          <span className="text-xs font-normal text-gray-400 mt-0.5">NYC</span>
+      <header className="hidden md:flex fixed top-0 left-0 right-0 z-50 h-16 bg-[#fdfaf5]/95 backdrop-blur border-b border-purple-100 px-6 items-center justify-between">
+        <Link href="/home" className="flex items-center gap-2">
+          <span className="logo-frame text-xl">Clutch</span>
+          <span className="text-xs font-normal text-gray-400">NYC</span>
         </Link>
 
         <nav className="flex items-center gap-1">

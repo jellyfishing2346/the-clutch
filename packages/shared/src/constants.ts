@@ -4,7 +4,7 @@ export const BOROUGHS = ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Isl
 
 export const NEIGHBORHOODS = {
   Manhattan: ['Harlem', 'Upper West Side', 'Upper East Side', 'Midtown', 'Chelsea', 'Greenwich Village', 'Lower East Side', 'Financial District'],
-  Queens: ['Astoria', 'Sunnyside', 'Jackson Heights', 'Flushing', 'Long Island City', 'Forest Hills'],
+  Queens: ['Astoria', 'Sunnyside', 'Woodside', 'Jackson Heights', 'Elmhurst', 'Corona', 'Flushing', 'Jamaica', 'Long Island City', 'Rego Park', 'Forest Hills', 'Ridgewood'],
   Brooklyn: ['Williamsburg', 'Bushwick', 'Crown Heights', 'Park Slope', 'Flatbush', 'Bay Ridge'],
   Bronx: ['South Bronx', 'Fordham', 'Riverdale', 'Morris Park'],
   'Staten Island': ['St. George', 'Stapleton', 'New Dorp'],
