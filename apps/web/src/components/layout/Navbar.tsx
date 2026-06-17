@@ -7,7 +7,15 @@ import { cn } from '@/lib/utils'
 import { Avatar } from '@/components/ui/Avatar'
 import { createClient } from '@/lib/supabase/client'
 import { fetchProfile } from '@/lib/api/users'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
+import type { Locale } from '@/lib/i18n/translations'
 import type { UserProfile } from 'shared'
+
+const LOCALES: { code: Locale; label: string }[] = [
+  { code: 'en', label: 'EN' },
+  { code: 'es', label: 'ES' },
+  { code: 'zh', label: '中' },
+]
 
 const NAV_ITEMS = [
   { href: '/home',      label: 'Map',       icon: '🗺️' },
@@ -19,6 +27,7 @@ const NAV_ITEMS = [
 
 export function Navbar() {
   const pathname = usePathname()
+  const { locale, setLocale } = useLanguage()
   const [me, setMe] = useState<UserProfile | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
 
@@ -70,6 +79,22 @@ export function Navbar() {
         </nav>
 
         <div className="flex items-center gap-3">
+          <div className="flex items-center gap-0.5 border border-gray-200 rounded-lg p-0.5">
+            {LOCALES.map(l => (
+              <button
+                key={l.code}
+                onClick={() => setLocale(l.code)}
+                className={cn(
+                  'px-2 py-0.5 rounded-md text-xs font-medium transition-colors',
+                  locale === l.code
+                    ? 'bg-clutch-600 text-white'
+                    : 'text-gray-400 hover:text-gray-700'
+                )}
+              >
+                {l.label}
+              </button>
+            ))}
+          </div>
           <Link href="/tasks/new" className="btn-primary text-sm py-2 px-5">
             + Post a Task
           </Link>

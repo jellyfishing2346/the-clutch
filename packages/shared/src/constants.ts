@@ -66,6 +66,39 @@ export const MAP_CONFIG = {
   taskRadius: 2, // km
 }
 
+export const SKILLS = [
+  // Physical & errand skills
+  { id: 'carrying',       label: 'Carrying & lifting',   category: 'simple_help' },
+  { id: 'errands',        label: 'Running errands',       category: 'errands' },
+  { id: 'delivery',       label: 'Local delivery',        category: 'delivery' },
+  { id: 'driving',        label: 'Driving',               category: 'errands' },
+  // Home
+  { id: 'cleaning',       label: 'Cleaning',              category: 'cleaning' },
+  { id: 'moving',         label: 'Moving help',           category: 'moving' },
+  { id: 'repairs',        label: 'Home repairs',          category: 'repairs' },
+  { id: 'painting',       label: 'Painting',              category: 'repairs' },
+  { id: 'furniture',      label: 'Furniture assembly',    category: 'repairs' },
+  // Food
+  { id: 'cooking',        label: 'Cooking',               category: 'cooking' },
+  { id: 'meal_prep',      label: 'Meal prep',             category: 'cooking' },
+  // Tech
+  { id: 'tech_support',   label: 'Tech support',          category: 'tech_help' },
+  { id: 'phone_setup',    label: 'Phone & tablet setup',  category: 'tech_help' },
+  { id: 'wifi',           label: 'Wi-Fi troubleshooting', category: 'tech_help' },
+  // Care
+  { id: 'pet_care',       label: 'Pet care',              category: 'pet_care' },
+  { id: 'dog_walking',    label: 'Dog walking',           category: 'pet_care' },
+  { id: 'childcare',      label: 'Childcare',             category: 'simple_help' },
+  { id: 'elder_care',     label: 'Elder care',            category: 'simple_help' },
+  // Education
+  { id: 'tutoring',       label: 'Tutoring',              category: 'tutoring' },
+  { id: 'language',       label: 'Language teaching',     category: 'tutoring' },
+  // Skilled
+  { id: 'photography',    label: 'Photography',           category: 'skilled' },
+  { id: 'graphic_design', label: 'Graphic design',        category: 'skilled' },
+  { id: 'sewing',         label: 'Sewing & alterations',  category: 'skilled' },
+] as const
+
 export const SUPPORTED_LANGUAGES = [
   { code: 'en', label: 'English' },
   { code: 'es', label: 'Spanish' },

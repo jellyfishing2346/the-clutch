@@ -7,16 +7,17 @@ import { TrustBadge } from '@/components/ui/TrustBadge'
 import { StarRating } from '@/components/ui/StarRating'
 import { PaymentBadge } from '@/components/ui/PaymentBadge'
 import { fetchTaskById, applyToTask } from '@/lib/api/tasks'
-import { fetchReviews } from '@/lib/api/users'
+import { fetchReviews, fetchHelpersBySkills } from '@/lib/api/users'
 import { formatRelativeTime } from '@/lib/utils'
-import { TASK_CATEGORIES, TRUST_LEVELS, SUPPORTED_LANGUAGES } from 'shared'
-import type { Task, Review } from 'shared'
+import { TASK_CATEGORIES, TRUST_LEVELS, SUPPORTED_LANGUAGES, SKILLS } from 'shared'
+import type { Task, Review, UserProfile } from 'shared'
 
 export default function TaskDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const [task, setTask] = useState<Task | null>(null)
   const [loading, setLoading] = useState(true)
   const [creatorReviews, setCreatorReviews] = useState<Review[]>([])
+  const [matchingHelpers, setMatchingHelpers] = useState<UserProfile[]>([])
   const [applying, setApplying] = useState(false)
   const [applied, setApplied] = useState(false)
   const [applyError, setApplyError] = useState('')
@@ -30,6 +31,16 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
           fetchReviews(data.creator_id)
             .then(reviews => setCreatorReviews(reviews.slice(0, 3)))
             .catch(console.error)
+        }
+        if (data?.category && data?.neighborhood) {
+          const skillIds = SKILLS
+            .filter(s => s.category === data.category)
+            .map(s => s.id)
+          if (skillIds.length > 0) {
+            fetchHelpersBySkills(skillIds, data.neighborhood)
+              .then(helpers => setMatchingHelpers(helpers.filter(h => h.id !== data.creator_id)))
+              .catch(console.error)
+          }
         }
       })
       .catch(console.error)
@@ -238,6 +249,48 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
                     <div className="text-gray-400 mt-0.5">— {review.reviewer?.name}</div>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Matching helpers */}
+          {matchingHelpers.length > 0 && (
+            <div className="card p-4">
+              <h3 className="text-sm font-semibold text-gray-700 mb-1">Neighbors who can help</h3>
+              <p className="text-xs text-gray-400 mb-3">
+                People in {task.neighborhood} with matching skills.
+              </p>
+              <div className="space-y-3">
+                {matchingHelpers.map(helper => {
+                  const helperSkills = SKILLS.filter(s =>
+                    helper.skills.includes(s.id) && s.category === task.category
+                  )
+                  return (
+                    <Link
+                      key={helper.id}
+                      href={`/profile/${helper.id}`}
+                      className="flex items-start gap-3 hover:opacity-80 transition-opacity"
+                    >
+                      <Avatar src={helper.avatar_url} name={helper.name} size="sm" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-gray-900 truncate">{helper.name}</div>
+                        <div className="flex items-center gap-1 mt-0.5">
+                          <TrustBadge level={helper.trust_level} size="sm" />
+                          <StarRating rating={helper.rating_avg} size="sm" />
+                        </div>
+                        {helperSkills.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1.5">
+                            {helperSkills.slice(0, 2).map(s => (
+                              <span key={s.id} className="text-[10px] bg-orange-50 text-orange-700 px-1.5 py-0.5 rounded-full border border-orange-100">
+                                {s.label}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </Link>
+                  )
+                })}
               </div>
             </div>
           )}

@@ -39,6 +39,7 @@ export interface UserProfile {
   tasks_completed: number
   tasks_posted: number
   languages: string[]
+  skills: string[]
   is_id_verified: boolean
   created_at: string
 }

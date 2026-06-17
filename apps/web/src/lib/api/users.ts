@@ -2,10 +2,13 @@ import { createClient } from '@/lib/supabase/client'
 import type { UserProfile, Review } from 'shared'
 import { MOCK_USERS, MOCK_REVIEWS } from 'shared'
 
+const IS_DEMO = !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  process.env.NEXT_PUBLIC_SUPABASE_URL.includes('your-project')
+
 export async function fetchProfile(userId: string): Promise<UserProfile | null> {
   const supabase = createClient()
 
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+  if (IS_DEMO) {
     return MOCK_USERS.find(u => u.id === userId) ?? null
   }
 
@@ -19,10 +22,37 @@ export async function fetchProfile(userId: string): Promise<UserProfile | null> 
   return data as UserProfile
 }
 
+export async function fetchHelpersBySkills(skillIds: string[], neighborhood: string): Promise<UserProfile[]> {
+  if (IS_DEMO) {
+    return MOCK_USERS.filter(u =>
+      u.skills.some(s => skillIds.includes(s)) &&
+      (u.neighborhood === neighborhood || true)
+    ).slice(0, 3)
+  }
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .overlaps('skills', skillIds)
+    .eq('neighborhood', neighborhood)
+    .order('tasks_completed', { ascending: false })
+    .limit(3)
+  if (error || !data?.length) {
+    const { data: fallback } = await supabase
+      .from('profiles')
+      .select('*')
+      .overlaps('skills', skillIds)
+      .order('tasks_completed', { ascending: false })
+      .limit(3)
+    return (fallback ?? []) as UserProfile[]
+  }
+  return data as UserProfile[]
+}
+
 export async function fetchReviews(userId: string): Promise<Review[]> {
   const supabase = createClient()
 
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+  if (IS_DEMO) {
     return MOCK_REVIEWS.filter(r => r.reviewee_id === userId)
   }
 

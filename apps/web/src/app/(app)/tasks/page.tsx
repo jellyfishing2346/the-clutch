@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { TaskCard } from '@/components/tasks/TaskCard'
 import { fetchNearbyTasks } from '@/lib/api/tasks'
+import { useRealtimeTasks } from '@/hooks/useRealtimeTasks'
 import { TASK_CATEGORIES } from 'shared'
 import type { Task, TaskCategory, PaymentType } from 'shared'
 
@@ -12,7 +13,7 @@ type SortOrder = 'newest' | 'highest_pay'
 const BOROUGH_FILTERS = ['All boroughs', 'Manhattan', 'Queens', 'Brooklyn', 'Bronx', 'Staten Island']
 
 export default function TasksPage() {
-  const [allTasks, setAllTasks] = useState<Task[]>([])
+  const [initialTasks, setInitialTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<TaskCategory | 'all'>('all')
@@ -20,9 +21,11 @@ export default function TasksPage() {
   const [boroughFilter, setBoroughFilter] = useState('All boroughs')
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest')
 
+  const { tasks: allTasks, newCount, dismissNewCount } = useRealtimeTasks(initialTasks)
+
   useEffect(() => {
     fetchNearbyTasks()
-      .then(data => setAllTasks(data))
+      .then(data => setInitialTasks(data))
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [])
@@ -117,6 +120,17 @@ export default function TasksPage() {
           ))}
         </div>
       </div>
+
+      {/* Live banner */}
+      {newCount > 0 && (
+        <button
+          onClick={dismissNewCount}
+          className="w-full flex items-center justify-between bg-clutch-600 text-white text-xs font-semibold px-4 py-2 rounded-xl mb-3 animate-fade-in"
+        >
+          <span>⚡ {newCount} new task{newCount > 1 ? 's' : ''} just posted nearby</span>
+          <span className="opacity-70">dismiss ×</span>
+        </button>
+      )}
 
       {/* Results header */}
       <div className="mb-3 flex items-center justify-between">

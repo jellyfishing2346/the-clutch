@@ -11,7 +11,7 @@ import { fetchProfile, fetchReviews, updateProfile } from '@/lib/api/users'
 import { fetchTasksByUser } from '@/lib/api/tasks'
 import { createClient } from '@/lib/supabase/client'
 import { formatRelativeTime } from '@/lib/utils'
-import { TRUST_LEVELS, SUPPORTED_LANGUAGES, BOROUGHS, NEIGHBORHOODS } from 'shared'
+import { TRUST_LEVELS, SUPPORTED_LANGUAGES, BOROUGHS, NEIGHBORHOODS, SKILLS } from 'shared'
 import type { UserProfile, Review, Task } from 'shared'
 
 export default function ProfilePage({ params }: { params: Promise<{ id: string }> }) {
@@ -25,7 +25,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
   const [isEditing, setIsEditing] = useState(false)
   const [discardWarning, setDiscardWarning] = useState(false)
   const [editForm, setEditForm] = useState({
-    name: '', bio: '', borough: '', neighborhood: '', languages: [] as string[],
+    name: '', bio: '', borough: '', neighborhood: '', languages: [] as string[], skills: [] as string[],
   })
   const [saving, setSaving] = useState(false)
 
@@ -56,6 +56,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
         borough: user.borough ?? '',
         neighborhood: user.neighborhood ?? '',
         languages: user.languages ?? [],
+        skills: user.skills ?? [],
       })
     }
   }, [user, isEditing])
@@ -65,7 +66,8 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
     editForm.bio !== (user.bio ?? '') ||
     editForm.borough !== (user.borough ?? '') ||
     editForm.neighborhood !== (user.neighborhood ?? '') ||
-    JSON.stringify(editForm.languages) !== JSON.stringify(user.languages ?? [])
+    JSON.stringify(editForm.languages) !== JSON.stringify(user.languages ?? []) ||
+    JSON.stringify(editForm.skills) !== JSON.stringify(user.skills ?? [])
   )
 
   function handleCloseModal() {
@@ -91,6 +93,15 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
     }))
   }
 
+  function toggleSkill(id: string) {
+    setEditForm(p => ({
+      ...p,
+      skills: p.skills.includes(id)
+        ? p.skills.filter(s => s !== id)
+        : [...p.skills, id],
+    }))
+  }
+
   async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
@@ -100,6 +111,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
       borough: editForm.borough || null,
       neighborhood: editForm.neighborhood || null,
       languages: editForm.languages,
+      skills: editForm.skills,
     })
     if (ok) {
       setUser(prev => prev ? {
@@ -109,6 +121,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
         borough: editForm.borough || null,
         neighborhood: editForm.neighborhood || null,
         languages: editForm.languages,
+        skills: editForm.skills,
       } : prev)
       setIsEditing(false)
       setDiscardWarning(false)
@@ -220,6 +233,23 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
                     {lang}
                   </span>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Skills */}
+          {user.skills && user.skills.length > 0 && (
+            <div className="card p-4">
+              <h3 className="text-sm font-semibold text-gray-700 mb-2">Skills</h3>
+              <div className="flex flex-wrap gap-1.5">
+                {user.skills.map(skillId => {
+                  const skill = SKILLS.find(s => s.id === skillId)
+                  return skill ? (
+                    <span key={skillId} className="text-xs bg-orange-50 text-orange-700 px-2.5 py-1 rounded-full border border-orange-100">
+                      {skill.label}
+                    </span>
+                  ) : null
+                })}
               </div>
             </div>
           )}
@@ -368,6 +398,27 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
                       }`}
                     >
                       {lang.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="label">Skills</label>
+                <p className="text-xs text-gray-400 mb-2">Select what you can help neighbors with.</p>
+                <div className="flex flex-wrap gap-2">
+                  {SKILLS.map(skill => (
+                    <button
+                      key={skill.id}
+                      type="button"
+                      onClick={() => toggleSkill(skill.id)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                        editForm.skills.includes(skill.id)
+                          ? 'bg-orange-500 text-white border-orange-500'
+                          : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300'
+                      }`}
+                    >
+                      {skill.label}
                     </button>
                   ))}
                 </div>

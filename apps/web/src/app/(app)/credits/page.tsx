@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { fetchCreditsBalance, fetchTransactions } from '@/lib/api/credits'
+import { fetchReferralCode, fetchReferralCount } from '@/lib/api/referrals'
 import { formatRelativeTime } from '@/lib/utils'
 import { CREDITS_CONFIG } from 'shared'
 import type { CreditsTransaction } from 'shared'
@@ -24,6 +25,9 @@ export default function CreditsPage() {
   const [balance, setBalance] = useState<number | null>(null)
   const [transactions, setTransactions] = useState<CreditsTransaction[]>([])
   const [loading, setLoading] = useState(true)
+  const [referralCode, setReferralCode] = useState<string | null>(null)
+  const [referralCount, setReferralCount] = useState(0)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     const supabase = createClient()
@@ -32,7 +36,11 @@ export default function CreditsPage() {
       Promise.all([
         fetchCreditsBalance(user.id),
         fetchTransactions(user.id),
-      ]).then(([bal, txns]) => {
+        fetchReferralCode(user.id),
+        fetchReferralCount(user.id),
+      ]).then(([bal, txns, code, refCount]) => {
+        setReferralCode(code)
+        setReferralCount(refCount)
         setBalance(bal)
         setTransactions([...txns].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()))
       }).catch(console.error).finally(() => setLoading(false))
@@ -135,6 +143,42 @@ export default function CreditsPage() {
               </div>
             ))}
           </div>
+        )}
+      </div>
+
+      {/* Referral */}
+      <div className="mt-6 card p-5">
+        <div className="flex items-start justify-between gap-4 mb-3">
+          <div>
+            <h2 className="font-semibold text-gray-900 flex items-center gap-2">
+              🔗 Invite a neighbor
+            </h2>
+            <p className="text-xs text-gray-500 mt-0.5">
+              You earn <strong>+10 CR</strong> and they earn <strong>+10 CR</strong> when they join with your link.
+              {referralCount > 0 && <span className="ml-1 text-green-600 font-medium">{referralCount} neighbor{referralCount !== 1 ? 's' : ''} joined so far.</span>}
+            </p>
+          </div>
+        </div>
+        {referralCode ? (
+          <div className="flex gap-2">
+            <div className="flex-1 input py-2 text-sm text-gray-600 bg-gray-50 select-all truncate">
+              {typeof window !== 'undefined' ? `${window.location.origin}/signup?ref=${referralCode}` : `/signup?ref=${referralCode}`}
+            </div>
+            <button
+              onClick={() => {
+                const link = `${window.location.origin}/signup?ref=${referralCode}`
+                navigator.clipboard.writeText(link).then(() => {
+                  setCopied(true)
+                  setTimeout(() => setCopied(false), 2000)
+                })
+              }}
+              className="btn-primary py-2 px-4 text-sm shrink-0"
+            >
+              {copied ? '✓ Copied!' : 'Copy link'}
+            </button>
+          </div>
+        ) : (
+          <div className="h-10 bg-gray-100 rounded-xl animate-pulse" />
         )}
       </div>
 

@@ -1,20 +1,28 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { BOROUGHS, NEIGHBORHOODS } from 'shared'
 import { createClient } from '@/lib/supabase/client'
+import { processReferral } from '@/lib/api/referrals'
 
 const IS_DEMO = !process.env.NEXT_PUBLIC_SUPABASE_URL ||
   process.env.NEXT_PUBLIC_SUPABASE_URL.includes('your-project')
 
 export default function SignupPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [step, setStep] = useState<1 | 2>(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [confirmationPending, setConfirmationPending] = useState(false)
+  const [refCode, setRefCode] = useState<string | null>(null)
+
+  useEffect(() => {
+    const ref = searchParams.get('ref')
+    if (ref) setRefCode(ref)
+  }, [searchParams])
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -65,6 +73,11 @@ export default function SignupPage() {
       setError(authError.message)
       setLoading(false)
       return
+    }
+
+    // Process referral bonus if user came via a referral link
+    if (refCode) {
+      await processReferral(refCode).catch(() => {})
     }
 
     if (data.session) {

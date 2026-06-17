@@ -6,19 +6,22 @@ import { TaskMap } from '@/components/map/TaskMap'
 import { TaskCard } from '@/components/tasks/TaskCard'
 import { fetchNearbyTasks } from '@/lib/api/tasks'
 import { fetchCreditsBalance } from '@/lib/api/credits'
+import { useRealtimeTasks } from '@/hooks/useRealtimeTasks'
 import { createClient } from '@/lib/supabase/client'
 import type { Task } from 'shared'
 
 export default function AppHomePage() {
-  const [tasks, setTasks] = useState<Task[]>([])
+  const [initialTasks, setInitialTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   const [filter, setFilter] = useState<string>('all')
   const [credits, setCredits] = useState<number | null>(null)
 
+  const { tasks, newCount, dismissNewCount } = useRealtimeTasks(initialTasks)
+
   useEffect(() => {
     fetchNearbyTasks()
-      .then(data => setTasks(data))
+      .then(data => setInitialTasks(data))
       .catch(console.error)
       .finally(() => setLoading(false))
     createClient().auth.getUser().then(({ data: { user } }) => {
@@ -65,6 +68,17 @@ export default function AppHomePage() {
             </button>
           ))}
         </div>
+
+        {/* Live new-task banner */}
+        {newCount > 0 && (
+          <button
+            onClick={dismissNewCount}
+            className="mx-4 mt-2 w-[calc(100%-2rem)] flex items-center justify-between bg-clutch-600 text-white text-xs font-semibold px-4 py-2 rounded-xl animate-fade-in"
+          >
+            <span>⚡ {newCount} new task{newCount > 1 ? 's' : ''} just posted</span>
+            <span className="opacity-70">dismiss ×</span>
+          </button>
+        )}
 
         {/* Task list */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3">
