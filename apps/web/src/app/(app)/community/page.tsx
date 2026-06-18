@@ -20,7 +20,7 @@ const PARTICIPATION_STYLES = [
     categories: [
       { icon: '🛒', label: 'Errands & drop-offs', filter: 'errands' },
       { icon: '💻', label: 'Online tech help', filter: 'tech_help' },
-      { icon: '✍️', label: 'Writing & editing', filter: 'writing' },
+      { icon: '✍️', label: 'Writing & editing', filter: 'other' },
       { icon: '🐾', label: 'Pet drop-in visits', filter: 'pet_care' },
     ],
     tips: [
@@ -41,8 +41,8 @@ const PARTICIPATION_STYLES = [
     badge: 'bg-amber-100 text-amber-800',
     categories: [
       { icon: '🛍️', label: 'Grocery shopping', filter: 'errands' },
-      { icon: '🔧', label: 'Minor repairs', filter: 'home_repair' },
-      { icon: '📦', label: 'Assembly & setup', filter: 'home_repair' },
+      { icon: '🔧', label: 'Minor repairs', filter: 'repairs' },
+      { icon: '📦', label: 'Assembly & setup', filter: 'repairs' },
       { icon: '🐕', label: 'Dog walking', filter: 'pet_care' },
     ],
     tips: [
@@ -64,7 +64,7 @@ const PARTICIPATION_STYLES = [
     categories: [
       { icon: '📦', label: 'Moving & heavy lifting', filter: 'moving' },
       { icon: '📚', label: 'In-person tutoring', filter: 'tutoring' },
-      { icon: '🎈', label: 'Event help', filter: 'event_help' },
+      { icon: '🎈', label: 'Event help', filter: 'simple_help' },
       { icon: '🤲', label: 'Community projects', filter: 'simple_help' },
     ],
     tips: [
@@ -142,7 +142,7 @@ const CENTERS = [
     address: 'Bayside, NY 11361',
     services: ['Counseling', 'Immigration help', 'Senior programs', 'Language support'],
     description: 'Serving the Korean and pan-Asian community in Queens with social and cultural programs.',
-    website: 'kcseny.org',
+    website: '',
   },
   {
     id: 5,
@@ -164,7 +164,7 @@ const CENTERS = [
     address: 'Washington Heights, NY 10040',
     services: ['Civic engagement', 'Cultural events', 'Youth leadership', 'Voter registration'],
     description: 'Promoting civic participation and cultural pride in the Dominican American community.',
-    website: 'danr.org',
+    website: '',
   },
   {
     id: 7,
@@ -401,14 +401,16 @@ export default function CommunityPage() {
               {/* Footer */}
               <div className="mt-auto pt-2 border-t border-gray-50 flex items-center justify-between">
                 <span className="text-[11px] text-gray-400">{center.address}</span>
-                <a
-                  href={`https://${center.website}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[11px] font-semibold text-clutch-600 hover:text-clutch-700 shrink-0 ml-2"
-                >
-                  Visit →
-                </a>
+                {center.website && (
+                  <a
+                    href={`https://${center.website}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[11px] font-semibold text-clutch-600 hover:text-clutch-700 shrink-0 ml-2"
+                  >
+                    Visit →
+                  </a>
+                )}
               </div>
             </div>
           )
