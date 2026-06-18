@@ -25,11 +25,13 @@ export default function ConversationPage({ params }: { params: Promise<{ id: str
     supabase.auth.getUser().then(({ data: { user } }) => setCurrentUserId(user?.id ?? null))
 
     // Fetch conversation metadata + messages
-    supabase.from('conversations').select('task_id, task:tasks(title)').eq('id', id).single()
-      .then(({ data }) => {
-        if (data?.task_id) setTaskId(data.task_id)
-        if (data?.task) setTaskTitle((data.task as { title: string }).title)
-      })
+   supabase.from('conversations').select('task_id, task:tasks(title)').eq('id', id).single()
+  .then(({ data }) => {
+    if (data?.task_id) setTaskId(data.task_id)
+    const taskData = data?.task as unknown as { title: string } | { title: string }[] | null | undefined
+    const task = Array.isArray(taskData) ? taskData[0] : taskData
+    if (task?.title) setTaskTitle(task.title)
+  })
 
     fetchMessages(id).then(setMessages).finally(() => setLoading(false))
 
