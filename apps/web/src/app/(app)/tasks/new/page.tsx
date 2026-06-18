@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { TASK_CATEGORIES, BOROUGHS, NEIGHBORHOODS, CREDITS_CONFIG } from 'shared'
 import type { TaskCategory, PaymentType } from 'shared'
@@ -53,6 +53,8 @@ export default function NewTaskPage() {
   const [posted, setPosted] = useState(false)
   const [submitError, setSubmitError] = useState('')
   const [creditsBalance, setCreditsBalance] = useState<number | null>(null)
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiUsed, setAiUsed] = useState(false)
 
   const [form, setForm] = useState({
     title: '',
@@ -74,6 +76,30 @@ export default function NewTaskPage() {
   }, [])
 
   const update = (field: string, value: string) => setForm(prev => ({ ...prev, [field]: value }))
+
+  const suggestWithAI = useCallback(async () => {
+    if (!form.title.trim() || aiLoading) return
+    setAiLoading(true)
+    try {
+      const res = await fetch('/api/ai/suggest-task', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: form.title, borough: form.borough, neighborhood: form.neighborhood }),
+      })
+      if (!res.ok) return
+      const data = await res.json()
+      setForm(prev => ({
+        ...prev,
+        description: data.description ?? prev.description,
+        category: data.category ?? prev.category,
+      }))
+      setAiUsed(true)
+    } catch {
+      // silently fail — user can fill in manually
+    } finally {
+      setAiLoading(false)
+    }
+  }, [form.title, form.borough, form.neighborhood, aiLoading])
 
   const selectedCategory = form.category ? TASK_CATEGORIES[form.category] : null
   const neighborhoods = form.borough ? NEIGHBORHOODS[form.borough as keyof typeof NEIGHBORHOODS] ?? [] : []
@@ -170,7 +196,30 @@ export default function NewTaskPage() {
                 required
                 maxLength={100}
               />
-              <div className="text-right text-xs text-gray-400 mt-1">{form.title.length}/100</div>
+              <div className="flex items-center justify-between mt-1">
+                <span className="text-xs text-gray-400">{form.title.length}/100</span>
+                {form.title.trim().length > 5 && (
+                  <button
+                    type="button"
+                    onClick={suggestWithAI}
+                    disabled={aiLoading}
+                    className="flex items-center gap-1.5 text-xs font-medium text-clutch-600 hover:text-clutch-700 disabled:opacity-50 transition-colors"
+                  >
+                    {aiLoading ? (
+                      <><span className="animate-spin inline-block">◌</span> Generating...</>
+                    ) : aiUsed ? (
+                      <>✨ Re-generate with AI</>
+                    ) : (
+                      <>✨ Improve with AI</>
+                    )}
+                  </button>
+                )}
+              </div>
+              {aiUsed && (
+                <p className="text-xs text-clutch-600 bg-clutch-50 border border-clutch-100 rounded-lg px-3 py-1.5 mt-2">
+                  ✨ AI filled in the description and category — feel free to edit them.
+                </p>
+              )}
             </div>
 
             <div>

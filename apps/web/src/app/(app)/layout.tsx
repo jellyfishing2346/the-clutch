@@ -1,4 +1,5 @@
 import { Navbar } from '@/components/layout/Navbar'
+import { ChatWidget } from '@/components/ai/ChatWidget'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -7,6 +8,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <main className="md:pt-16 pb-20 md:pb-0">
         {children}
       </main>
+      <ChatWidget />
     </div>
   )
 }
