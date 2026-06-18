@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
-import type { Task, TaskCategory, PaymentType, GeoPoint } from 'shared'
+import type { Task, TaskApplication, TaskCategory, PaymentType, GeoPoint } from 'shared'
 
 const IS_DEMO = !process.env.NEXT_PUBLIC_SUPABASE_URL ||
   process.env.NEXT_PUBLIC_SUPABASE_URL.includes('your-project')
@@ -124,5 +124,84 @@ export async function applyToTask(taskId: string, message: string): Promise<bool
     .from('task_applications')
     .insert({ task_id: taskId, applicant_id: user.id, message })
 
+  return !error
+}
+
+export async function fetchApplications(taskId: string): Promise<TaskApplication[]> {
+  if (IS_DEMO) return []
+  const supabase = createClient()
+
+  const { data, error } = await supabase
+    .from('task_applications')
+    .select('*, applicant:profiles(*)')
+    .eq('task_id', taskId)
+    .order('created_at', { ascending: true })
+
+  if (error) return []
+  return data as TaskApplication[]
+}
+
+export async function acceptApplication(appId: string, taskId: string, applicantId: string): Promise<string | null> {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
+  // Accept this application
+  const { error: accErr } = await supabase
+    .from('task_applications')
+    .update({ status: 'accepted' })
+    .eq('id', appId)
+
+  if (accErr) return null
+
+  // Reject all others
+  await supabase
+    .from('task_applications')
+    .update({ status: 'rejected' })
+    .eq('task_id', taskId)
+    .neq('id', appId)
+
+  // Move task to in_progress
+  await supabase
+    .from('tasks')
+    .update({ status: 'in_progress' })
+    .eq('id', taskId)
+
+  // Create or find conversation between poster and helper
+  const { data: existing } = await supabase
+    .from('conversations')
+    .select('id')
+    .eq('task_id', taskId)
+    .single()
+
+  if (existing?.id) return existing.id
+
+  const { data: conv, error: convErr } = await supabase
+    .from('conversations')
+    .insert({ task_id: taskId, participant_ids: [user.id, applicantId] })
+    .select('id')
+    .single()
+
+  if (convErr) return null
+  return conv.id
+}
+
+export async function rejectApplication(appId: string): Promise<boolean> {
+  if (IS_DEMO) return false
+  const supabase = createClient()
+  const { error } = await supabase
+    .from('task_applications')
+    .update({ status: 'rejected' })
+    .eq('id', appId)
+  return !error
+}
+
+export async function completeTask(taskId: string): Promise<boolean> {
+  if (IS_DEMO) return false
+  const supabase = createClient()
+  const { error } = await supabase
+    .from('tasks')
+    .update({ status: 'completed' })
+    .eq('id', taskId)
   return !error
 }

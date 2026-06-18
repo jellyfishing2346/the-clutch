@@ -6,22 +6,32 @@ import { Avatar } from '@/components/ui/Avatar'
 import { TrustBadge } from '@/components/ui/TrustBadge'
 import { StarRating } from '@/components/ui/StarRating'
 import { PaymentBadge } from '@/components/ui/PaymentBadge'
-import { fetchTaskById, applyToTask } from '@/lib/api/tasks'
+import { fetchTaskById, applyToTask, fetchApplications, acceptApplication, rejectApplication, completeTask } from '@/lib/api/tasks'
 import { fetchReviews, fetchHelpersBySkills } from '@/lib/api/users'
 import { formatRelativeTime } from '@/lib/utils'
 import { TASK_CATEGORIES, TRUST_LEVELS, SUPPORTED_LANGUAGES, SKILLS } from 'shared'
-import type { Task, Review, UserProfile } from 'shared'
+import type { Task, Review, UserProfile, TaskApplication } from 'shared'
+import { createClient } from '@/lib/supabase/client'
 
 export default function TaskDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const [task, setTask] = useState<Task | null>(null)
   const [loading, setLoading] = useState(true)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [creatorReviews, setCreatorReviews] = useState<Review[]>([])
   const [matchingHelpers, setMatchingHelpers] = useState<UserProfile[]>([])
+  const [applications, setApplications] = useState<TaskApplication[]>([])
   const [applying, setApplying] = useState(false)
   const [applied, setApplied] = useState(false)
   const [applyError, setApplyError] = useState('')
   const [message, setMessage] = useState('')
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
+
+  useEffect(() => {
+    createClient().auth.getUser().then(({ data: { user } }) => {
+      setCurrentUserId(user?.id ?? null)
+    })
+  }, [])
 
   useEffect(() => {
     fetchTaskById(id)
@@ -42,10 +52,41 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
               .catch(console.error)
           }
         }
+        fetchApplications(data?.id ?? id).then(setApplications).catch(console.error)
       })
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [id])
+
+  async function handleAccept(appId: string, applicantId: string) {
+    if (!task) return
+    setActionLoading(appId)
+    const convId = await acceptApplication(appId, task.id, applicantId)
+    if (convId) {
+      setTask(t => t ? { ...t, status: 'in_progress' } : t)
+      setApplications(prev => prev.map(a =>
+        a.id === appId ? { ...a, status: 'accepted' } :
+        a.status === 'pending' ? { ...a, status: 'rejected' } : a
+      ))
+      window.location.href = `/messages/${convId}`
+    }
+    setActionLoading(null)
+  }
+
+  async function handleReject(appId: string) {
+    setActionLoading(appId)
+    await rejectApplication(appId)
+    setApplications(prev => prev.map(a => a.id === appId ? { ...a, status: 'rejected' } : a))
+    setActionLoading(null)
+  }
+
+  async function handleComplete() {
+    if (!task) return
+    setActionLoading('complete')
+    await completeTask(task.id)
+    setTask(t => t ? { ...t, status: 'completed' } : t)
+    setActionLoading(null)
+  }
 
   if (loading) {
     return (
@@ -138,6 +179,88 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
               </div>
             </div>
           </div>
+
+          {/* Applicants panel — only visible to the task creator */}
+          {currentUserId === task.creator_id && (
+            <div className="card p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-gray-900">
+                  People who offered to help ({applications.length})
+                </h3>
+                {task.status === 'in_progress' && (
+                  <button
+                    onClick={handleComplete}
+                    disabled={actionLoading === 'complete'}
+                    className="text-xs btn-primary py-1.5 px-4"
+                  >
+                    {actionLoading === 'complete' ? '◌ Saving...' : '✓ Mark complete'}
+                  </button>
+                )}
+                {task.status === 'completed' && (
+                  <span className="text-xs font-semibold text-green-600 bg-green-50 px-3 py-1.5 rounded-full border border-green-200">
+                    ✓ Completed
+                  </span>
+                )}
+              </div>
+
+              {applications.length === 0 ? (
+                <p className="text-sm text-gray-400 text-center py-4">No one has offered to help yet.</p>
+              ) : (
+                <div className="space-y-3">
+                  {applications.map(app => (
+                    <div key={app.id} className={`flex items-start gap-3 p-3 rounded-xl border ${
+                      app.status === 'accepted' ? 'bg-green-50 border-green-200' :
+                      app.status === 'rejected' ? 'bg-gray-50 border-gray-100 opacity-60' :
+                      'bg-white border-gray-200'
+                    }`}>
+                      <Avatar src={app.applicant?.avatar_url ?? null} name={app.applicant?.name ?? '?'} size="sm" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Link href={`/profile/${app.applicant_id}`} className="text-sm font-medium text-gray-900 hover:text-clutch-600">
+                            {app.applicant?.name ?? 'Unknown'}
+                          </Link>
+                          {app.applicant && <TrustBadge level={app.applicant.trust_level} size="sm" />}
+                          {app.applicant && <StarRating rating={app.applicant.rating_avg} count={app.applicant.rating_count} size="sm" />}
+                        </div>
+                        {app.message && (
+                          <p className="text-xs text-gray-500 mt-1 italic">&ldquo;{app.message}&rdquo;</p>
+                        )}
+                        <div className="text-xs text-gray-400 mt-1">{formatRelativeTime(app.created_at)}</div>
+                      </div>
+                      <div className="shrink-0 flex flex-col gap-1.5">
+                        {app.status === 'pending' && (
+                          <>
+                            <button
+                              onClick={() => handleAccept(app.id, app.applicant_id)}
+                              disabled={actionLoading === app.id}
+                              className="text-xs bg-clutch-600 text-white px-3 py-1.5 rounded-lg hover:bg-clutch-700 transition-colors disabled:opacity-50"
+                            >
+                              {actionLoading === app.id ? '◌' : '✓ Accept'}
+                            </button>
+                            <button
+                              onClick={() => handleReject(app.id)}
+                              disabled={actionLoading === app.id}
+                              className="text-xs text-gray-500 hover:text-red-600 px-3 py-1.5 rounded-lg border border-gray-200 hover:border-red-200 transition-colors disabled:opacity-50"
+                            >
+                              Decline
+                            </button>
+                          </>
+                        )}
+                        {app.status === 'accepted' && (
+                          <Link href={`/messages`} className="text-xs text-green-700 font-medium bg-green-100 px-3 py-1.5 rounded-lg">
+                            💬 Message
+                          </Link>
+                        )}
+                        {app.status === 'rejected' && (
+                          <span className="text-xs text-gray-400">Declined</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Apply form */}
           {!applied ? (
