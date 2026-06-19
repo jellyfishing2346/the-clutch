@@ -4,6 +4,7 @@ import { useState, useEffect, use } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Avatar } from '@/components/ui/Avatar'
+import { AvatarUpload } from '@/components/ui/AvatarUpload'
 import { TrustBadge } from '@/components/ui/TrustBadge'
 import { StarRating } from '@/components/ui/StarRating'
 import { TaskCard } from '@/components/tasks/TaskCard'
@@ -127,6 +128,10 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
       setDiscardWarning(false)
     }
     setSaving(false)
+  }
+
+  function handleAvatarUploaded(url: string) {
+    setUser(prev => prev ? { ...prev, avatar_url: url } : prev)
   }
 
   if (loading) {
@@ -331,6 +336,10 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
             <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-bold text-gray-900">Edit profile</h2>
               <button onClick={handleCloseModal} className="text-gray-400 hover:text-gray-600 text-xl leading-none" aria-label="Close">✕</button>
+            </div>
+
+            <div className="flex justify-center mb-4">
+              <AvatarUpload currentSrc={user.avatar_url} name={user.name} onUploaded={handleAvatarUploaded} />
             </div>
 
             <form onSubmit={handleSaveProfile} className="space-y-4">

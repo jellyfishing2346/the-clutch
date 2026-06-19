@@ -80,3 +80,26 @@ export async function updateProfile(updates: Partial<UserProfile>): Promise<bool
 
   return !error
 }
+
+export async function uploadAvatar(file: File): Promise<string | null> {
+  if (IS_DEMO) return URL.createObjectURL(file)
+  const supabase = createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
+  const ext = file.name.split('.').pop()
+  const path = `${user.id}/avatar.${ext}`
+
+  const { error: uploadError } = await supabase.storage
+    .from('avatars')
+    .upload(path, file, { upsert: true, cacheControl: '3600' })
+
+  if (uploadError) return null
+
+  const { data } = supabase.storage.from('avatars').getPublicUrl(path)
+  const avatarUrl = `${data.publicUrl}?t=${Date.now()}`
+
+  const ok = await updateProfile({ avatar_url: avatarUrl })
+  return ok ? avatarUrl : null
+}

@@ -20,7 +20,7 @@ const STYLES: Record<PaymentType, string> = {
 
 const ICONS: Record<PaymentType, string> = {
   cash: '$',
-  credits: 'CR',
+  credits: '◈',
   exchange: '⇄',
   free: '♥',
 }
