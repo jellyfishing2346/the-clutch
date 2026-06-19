@@ -373,7 +373,7 @@ export default function CommunityPage() {
       {/* Grid */}
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {filtered.map(center => {
-          const badge = BADGE_COLORS[center.cultural]
+          const badge = BADGE_COLORS[center.cultural as CulturalGroup]
           const filterMeta = FILTERS.find(f => f.value === center.cultural)!
           return (
             <div key={center.id} className="card p-5 flex flex-col gap-3 hover:border-clutch-200 transition-colors">
