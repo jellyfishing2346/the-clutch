@@ -95,7 +95,10 @@ export async function uploadAvatar(file: File): Promise<string | null> {
     .from('avatars')
     .upload(path, file, { upsert: true, cacheControl: '3600' })
 
-  if (uploadError) return null
+  if (uploadError) {
+    console.error('uploadAvatar:', uploadError.message)
+    return null
+  }
 
   const { data } = supabase.storage.from('avatars').getPublicUrl(path)
   const avatarUrl = `${data.publicUrl}?t=${Date.now()}`
