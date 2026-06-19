@@ -78,7 +78,11 @@ export async function updateProfile(updates: Partial<UserProfile>): Promise<bool
     .update({ ...updates, updated_at: new Date().toISOString() })
     .eq('id', user.id)
 
-  return !error
+  if (error) {
+    console.error('updateProfile:', error.message)
+    return false
+  }
+  return true
 }
 
 export async function uploadAvatar(file: File): Promise<string | null> {
