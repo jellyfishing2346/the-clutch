@@ -114,6 +114,22 @@ export async function createTask(payload: CreateTaskPayload): Promise<{ id: stri
   return data
 }
 
+export async function cancelTask(taskId: string): Promise<boolean> {
+  if (IS_DEMO) return false
+  const supabase = createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return false
+
+  const { error } = await supabase
+    .from('tasks')
+    .update({ status: 'cancelled' })
+    .eq('id', taskId)
+    .eq('creator_id', user.id)
+
+  return !error
+}
+
 export async function applyToTask(taskId: string, message: string): Promise<boolean> {
   const supabase = createClient()
 
