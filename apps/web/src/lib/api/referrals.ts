@@ -54,9 +54,7 @@ export async function processReferral(referralCode: string): Promise<boolean> {
     type: 'bonus',
     description: 'Referral bonus — a neighbor joined with your link',
   })
-  await supabase.from('profiles').update({
-    credits_balance: supabase.rpc('increment', { x: 10 }),
-  }).eq('id', referrer.id)
+  await supabase.rpc('increment_credits', { user_id: referrer.id, amount: 10 })
 
   // Credit the new user (+10 CR welcome referral bonus, on top of signup bonus)
   await supabase.from('credits_transactions').insert({
@@ -65,10 +63,8 @@ export async function processReferral(referralCode: string): Promise<boolean> {
     type: 'bonus',
     description: 'Joined via referral — welcome bonus',
   })
-  await supabase.from('profiles').update({
-    credits_balance: supabase.rpc('increment', { x: 10 }),
-    referred_by: referrer.id,
-  }).eq('id', user.id)
+  await supabase.rpc('increment_credits', { user_id: user.id, amount: 10 })
+  await supabase.from('profiles').update({ referred_by: referrer.id }).eq('id', user.id)
 
   // Mark referral as credited
   await supabase
