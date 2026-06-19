@@ -29,6 +29,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
     name: '', bio: '', borough: '', neighborhood: '', languages: [] as string[], skills: [] as string[],
   })
   const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
 
   async function handleLogout() {
     await createClient().auth.signOut()
@@ -104,31 +105,34 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
   }
 
   async function handleSaveProfile(e: React.FormEvent) {
-    e.preventDefault()
-    setSaving(true)
-    const ok = await updateProfile({
+  e.preventDefault()
+  setSaving(true)
+  setSaveError('')
+  const ok = await updateProfile({
+    name: editForm.name,
+    bio: editForm.bio || null,
+    borough: editForm.borough || null,
+    neighborhood: editForm.neighborhood || null,
+    languages: editForm.languages,
+    skills: editForm.skills,
+  })
+  if (ok) {
+    setUser(prev => prev ? {
+      ...prev,
       name: editForm.name,
       bio: editForm.bio || null,
       borough: editForm.borough || null,
       neighborhood: editForm.neighborhood || null,
       languages: editForm.languages,
       skills: editForm.skills,
-    })
-    if (ok) {
-      setUser(prev => prev ? {
-        ...prev,
-        name: editForm.name,
-        bio: editForm.bio || null,
-        borough: editForm.borough || null,
-        neighborhood: editForm.neighborhood || null,
-        languages: editForm.languages,
-        skills: editForm.skills,
-      } : prev)
-      setIsEditing(false)
-      setDiscardWarning(false)
-    }
-    setSaving(false)
+    } : prev)
+    setIsEditing(false)
+    setDiscardWarning(false)
+  } else {
+    setSaveError('Failed to save changes. Please try again.')
   }
+  setSaving(false)
+}
 
   function handleAvatarUploaded(url: string) {
     setUser(prev => prev ? { ...prev, avatar_url: url } : prev)
