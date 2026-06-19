@@ -436,6 +436,11 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
                   ))}
                 </div>
               </div>
+                {saveError && (
+                <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
+                  {saveError}
+                </p>
+              )}
 
               {discardWarning ? (
                 <div className="rounded-xl bg-amber-50 border border-amber-200 p-3">
