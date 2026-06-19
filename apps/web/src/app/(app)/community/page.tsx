@@ -156,15 +156,20 @@ const CENTERS = [
     website: 'hispanicfederation.org',
   },
   {
-    id: 6,
-    name: 'Dominican American National Roundtable – NY',
-    cultural: 'latino' as CulturalGroup,
-    type: 'Civic & Cultural',
-    neighborhood: 'Washington Heights, Manhattan',
-    address: 'Washington Heights, NY 10040',
-    services: ['Civic engagement', 'Cultural events', 'Youth leadership', 'Voter registration'],
-    description: 'Promoting civic participation and cultural pride in the Dominican American community.',
-    website: '',
+    "id": 6,
+    "name": "Alianza Dominicana Cultural Center",
+    "cultural": "latino",
+    "type": "Civic & Cultural",
+    "neighborhood": "Washington Heights, Manhattan",
+    "address": "530 W 166th St, New York, NY 10032",
+    "services": [
+      "Arts & Music workshops",
+      "Youth employment programs",
+      "Computer literacy",
+      "Community meeting space"
+    ],
+    "description": "A multi-disciplinary arts center showcasing Dominican and Latin American culture while providing free youth programs and intergenerational learning.",
+    "website": "https://cccsny.org/services/alianza-dominicana-cultural-center"
   },
   {
     id: 7,
@@ -230,7 +235,7 @@ const CENTERS = [
     address: 'South Bronx, NY 10454',
     services: ['Health screenings', 'Food assistance', 'Youth programs', 'Community wellness'],
     description: 'Providing integrated health and social services to underserved communities across the Bronx.',
-    website: 'bchn.org',
+    website: 'https://www.bchnhealth.org/',
   },
 ]
 
