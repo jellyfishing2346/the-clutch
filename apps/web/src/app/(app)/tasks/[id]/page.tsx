@@ -6,8 +6,10 @@ import { Avatar } from '@/components/ui/Avatar'
 import { TrustBadge } from '@/components/ui/TrustBadge'
 import { StarRating } from '@/components/ui/StarRating'
 import { PaymentBadge } from '@/components/ui/PaymentBadge'
-import { fetchTaskById, applyToTask, fetchApplications, acceptApplication, rejectApplication, completeTask } from '@/lib/api/tasks'
+import { ReviewForm } from '@/components/ui/ReviewForm'
+import { fetchTaskById, applyToTask, fetchApplications, acceptApplication, rejectApplication, completeTask, cancelTask } from '@/lib/api/tasks'
 import { fetchReviews, fetchHelpersBySkills } from '@/lib/api/users'
+import { fetchMyReviewForTask } from '@/lib/api/reviews'
 import { formatRelativeTime } from '@/lib/utils'
 import { TASK_CATEGORIES, TRUST_LEVELS, SUPPORTED_LANGUAGES, SKILLS } from 'shared'
 import type { Task, Review, UserProfile, TaskApplication } from 'shared'
@@ -26,6 +28,8 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
   const [applyError, setApplyError] = useState('')
   const [message, setMessage] = useState('')
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [actionError, setActionError] = useState('')
+  const [myReview, setMyReview] = useState<Review | null>(null)
 
   useEffect(() => {
     createClient().auth.getUser().then(({ data: { user } }) => {
@@ -58,9 +62,15 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
       .finally(() => setLoading(false))
   }, [id])
 
+  useEffect(() => {
+    if (!currentUserId) return
+    fetchMyReviewForTask(id).then(setMyReview).catch(console.error)
+  }, [id, currentUserId])
+
   async function handleAccept(appId: string, applicantId: string) {
     if (!task) return
     setActionLoading(appId)
+    setActionError('')
     const convId = await acceptApplication(appId, task.id, applicantId)
     if (convId) {
       setTask(t => t ? { ...t, status: 'in_progress' } : t)
@@ -69,6 +79,8 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
         a.status === 'pending' ? { ...a, status: 'rejected' } : a
       ))
       window.location.href = `/messages/${convId}`
+    } else {
+      setActionError('Could not accept this offer — you may not have enough credits for this task, or something went wrong.')
     }
     setActionLoading(null)
   }
@@ -83,8 +95,25 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
   async function handleComplete() {
     if (!task) return
     setActionLoading('complete')
-    await completeTask(task.id)
-    setTask(t => t ? { ...t, status: 'completed' } : t)
+    const ok = await completeTask(task.id)
+    if (ok) {
+      setTask(t => t ? { ...t, status: 'completed' } : t)
+    } else {
+      setActionError('Failed to mark this task complete. Please try again.')
+    }
+    setActionLoading(null)
+  }
+
+  async function handleCancelTask() {
+    if (!task) return
+    if (!window.confirm("Cancel this task? Applicants will see it's no longer available.")) return
+    setActionLoading('cancel')
+    const ok = await cancelTask(task.id)
+    if (ok) {
+      setTask(t => t ? { ...t, status: 'cancelled' } : t)
+    } else {
+      setActionError('Failed to cancel this task. Please try again.')
+    }
     setActionLoading(null)
   }
 
@@ -115,6 +144,16 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
 
   const category = TASK_CATEGORIES[task.category]
   const trustInfo = TRUST_LEVELS[task.required_trust_level]
+
+  // Who the current user would be reviewing: the creator reviews the accepted
+  // helper, and the accepted helper reviews the creator.
+  const acceptedApp = applications.find(a => a.status === 'accepted')
+  const isCreator = currentUserId === task.creator_id
+  const isAcceptedHelper = !!acceptedApp && currentUserId === acceptedApp.applicant_id
+  const reviewee = isCreator
+    ? (acceptedApp?.applicant ?? null)
+    : (isAcceptedHelper ? (task.creator ?? null) : null)
+  const canReview = task.status === 'completed' && !myReview && reviewee && (isCreator || isAcceptedHelper)
 
   async function handleApply(e: React.FormEvent) {
     e.preventDefault()
@@ -166,7 +205,22 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
                   👋 {task.applicant_count} {task.applicant_count === 1 ? 'person' : 'people'} offered to help
                 </span>
               )}
+              {task.status === 'cancelled' && (
+                <span className="text-red-500 font-medium">✕ Cancelled</span>
+              )}
             </div>
+
+            {isCreator && (task.status === 'open' || task.status === 'in_progress') && (
+              <div className="mt-4 pt-4 border-t border-gray-50">
+                <button
+                  onClick={handleCancelTask}
+                  disabled={actionLoading === 'cancel'}
+                  className="text-xs text-red-500 hover:text-red-600 border border-red-200 hover:border-red-300 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  {actionLoading === 'cancel' ? '◌' : 'Cancel task'}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Trust requirement */}
@@ -180,8 +234,12 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
             </div>
           </div>
 
+          {actionError && (
+            <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">{actionError}</p>
+          )}
+
           {/* Applicants panel — only visible to the task creator */}
-          {currentUserId === task.creator_id && (
+          {isCreator && (
             <div className="card p-5">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-gray-900">
@@ -262,8 +320,29 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
             </div>
           )}
 
+          {/* Leave a review — shown to the creator and the accepted helper once completed */}
+          {canReview && reviewee && (
+            <ReviewForm
+              taskId={task.id}
+              revieweeId={reviewee.id}
+              revieweeName={reviewee.name}
+              onSubmitted={() => fetchMyReviewForTask(task.id).then(setMyReview)}
+            />
+          )}
+          {myReview && (
+            <div className="card p-5 border-green-200 bg-green-50 text-center">
+              <p className="text-sm font-semibold text-green-700">Thanks for your review! ⭐ {myReview.rating}/5</p>
+            </div>
+          )}
+
           {/* Apply form */}
-          {!applied ? (
+          {!currentUserId ? (
+            <div className="card p-5 text-center">
+              <h3 className="font-semibold text-gray-900 mb-2">Want to help?</h3>
+              <p className="text-sm text-gray-500 mb-4">Sign in to offer your help on this task.</p>
+              <Link href="/login" className="btn-primary inline-flex">Sign in to offer to help</Link>
+            </div>
+          ) : isCreator ? null : !applied ? (
             <div className="card p-5">
               <h3 className="font-semibold text-gray-900 mb-3">Offer to help</h3>
               <form onSubmit={handleApply} className="space-y-3">

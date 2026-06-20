@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/client'
+import { CREDITS_CONFIG } from 'shared'
 import type { Task, TaskApplication, TaskCategory, PaymentType, GeoPoint } from 'shared'
 
 const IS_DEMO = !process.env.NEXT_PUBLIC_SUPABASE_URL ||
@@ -162,6 +163,25 @@ export async function acceptApplication(appId: string, taskId: string, applicant
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
+  const { data: task } = await supabase
+    .from('tasks')
+    .select('payment_type, credits_amount, creator_id')
+    .eq('id', taskId)
+    .single()
+
+  if (!task || task.creator_id !== user.id) return null
+
+  // If this is a credits task, confirm the creator can actually afford it
+  // before accepting — avoids accepting then silently failing to pay.
+  if (task.payment_type === 'credits' && task.credits_amount) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('credits_balance')
+      .eq('id', user.id)
+      .single()
+    if (!profile || profile.credits_balance < task.credits_amount) return null
+  }
+
   // Accept this application
   const { error: accErr } = await supabase
     .from('task_applications')
@@ -182,6 +202,18 @@ export async function acceptApplication(appId: string, taskId: string, applicant
     .from('tasks')
     .update({ status: 'in_progress' })
     .eq('id', taskId)
+
+  // Deduct credits from the creator now; paid out to the helper on completion
+  if (task.payment_type === 'credits' && task.credits_amount) {
+    await supabase.rpc('increment_credits', { user_id: user.id, amount: -task.credits_amount })
+    await supabase.from('credits_transactions').insert({
+      user_id: user.id,
+      amount: -task.credits_amount,
+      type: 'spent',
+      description: 'Task accepted — credits committed to helper',
+      task_id: taskId,
+    })
+  }
 
   // Create or find conversation between poster and helper
   const { data: existing } = await supabase
@@ -215,9 +247,60 @@ export async function rejectApplication(appId: string): Promise<boolean> {
 export async function completeTask(taskId: string): Promise<boolean> {
   if (IS_DEMO) return false
   const supabase = createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return false
+
+  const { data: task } = await supabase
+    .from('tasks')
+    .select('creator_id, payment_type, credits_amount')
+    .eq('id', taskId)
+    .single()
+
+  if (!task || task.creator_id !== user.id) return false
+
+  const { data: accepted } = await supabase
+    .from('task_applications')
+    .select('applicant_id')
+    .eq('task_id', taskId)
+    .eq('status', 'accepted')
+    .single()
+
   const { error } = await supabase
     .from('tasks')
     .update({ status: 'completed' })
     .eq('id', taskId)
-  return !error
+
+  if (error) return false
+
+  if (accepted?.applicant_id) {
+    const helperId = accepted.applicant_id
+
+    if (task.payment_type === 'credits' && task.credits_amount) {
+      await supabase.rpc('increment_credits', { user_id: helperId, amount: task.credits_amount })
+      await supabase.from('credits_transactions').insert({
+        user_id: helperId,
+        amount: task.credits_amount,
+        type: 'earned',
+        description: 'Completed a credits task',
+        task_id: taskId,
+      })
+    } else if (task.payment_type === 'free') {
+      await supabase.rpc('increment_credits', { user_id: helperId, amount: CREDITS_CONFIG.earnPerHelpTask })
+      await supabase.from('credits_transactions').insert({
+        user_id: helperId,
+        amount: CREDITS_CONFIG.earnPerHelpTask,
+        type: 'earned',
+        description: 'Helped with a free task',
+        task_id: taskId,
+      })
+    }
+
+    // tasks_completed was never being incremented anywhere, which also meant
+    // maybe_upgrade_trust's thresholds could never be hit — fixed here.
+    await supabase.rpc('increment_tasks_completed', { user_id: helperId })
+    await supabase.rpc('maybe_upgrade_trust', { p_user_id: helperId })
+  }
+
+  return true
 }

@@ -315,6 +315,15 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.is_accepted_helper_for_task(UUID, UUID) TO authenticated, anon;
 
+-- Bumps tasks_completed for a helper — this was never being called anywhere,
+-- which also meant maybe_upgrade_trust's thresholds could never be reached.
+CREATE OR REPLACE FUNCTION public.increment_tasks_completed(user_id UUID)
+RETURNS VOID LANGUAGE sql SECURITY DEFINER AS $$
+  UPDATE public.profiles SET tasks_completed = tasks_completed + 1, updated_at = NOW() WHERE id = user_id;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.increment_tasks_completed(UUID) TO authenticated;
+
 -- ─── ROW LEVEL SECURITY ──────────────────────
 
 ALTER TABLE public.profiles             ENABLE ROW LEVEL SECURITY;
@@ -396,6 +405,10 @@ DO $$ BEGIN
   ALTER PUBLICATION supabase_realtime ADD TABLE public.task_applications;
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+DO $$ BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.tasks;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 -- ─── BACKFILL existing auth users ────────────
 -- Creates a profile for any user who signed up before this schema was applied.
 INSERT INTO public.profiles (id, name, credits_balance)
@@ -406,4 +419,3 @@ SELECT
 FROM auth.users
 WHERE id NOT IN (SELECT id FROM public.profiles)
 ON CONFLICT (id) DO NOTHING;
-

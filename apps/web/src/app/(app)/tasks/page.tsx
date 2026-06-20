@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 import { TaskCard } from '@/components/tasks/TaskCard'
 import { fetchNearbyTasks } from '@/lib/api/tasks'
 import { useRealtimeTasks } from '@/hooks/useRealtimeTasks'
+import { useLanguage } from '@/lib/i18n/LanguageContext'
 import { TASK_CATEGORIES } from 'shared'
 import type { Task, TaskCategory, PaymentType } from 'shared'
 
@@ -13,6 +14,7 @@ type SortOrder = 'newest' | 'highest_pay'
 const BOROUGH_FILTERS = ['All boroughs', 'Manhattan', 'Queens', 'Brooklyn', 'Bronx', 'Staten Island']
 
 export default function TasksPage() {
+  const { t } = useLanguage()
   const [initialTasks, setInitialTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -54,8 +56,8 @@ export default function TasksPage() {
     <div className="max-w-5xl mx-auto px-4 py-6">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-1">Browse Tasks</h1>
-        <p className="text-gray-500 text-sm">Find ways to help neighbors and earn credits.</p>
+        <h1 className="text-2xl font-bold text-gray-900 mb-1">{t('tasks_title')}</h1>
+        <p className="text-gray-500 text-sm">{t('tasks_sub')}</p>
       </div>
 
       {/* Search */}
@@ -64,7 +66,7 @@ export default function TasksPage() {
         <input
           type="search"
           className="input pl-10"
-          placeholder="Search tasks..."
+          placeholder={t('tasks_search')}
           value={search}
           onChange={e => setSearch(e.target.value)}
         />
@@ -137,7 +139,7 @@ export default function TasksPage() {
         <span className="text-sm text-gray-500">
           {loading
             ? <span className="inline-block h-4 w-24 bg-gray-100 rounded animate-pulse" />
-            : `${tasks.length} task${tasks.length !== 1 ? 's' : ''} found`
+            : t('tasks_found', tasks.length)
           }
         </span>
         <select
@@ -167,13 +169,13 @@ export default function TasksPage() {
         <div className="text-center py-16">
           <div className="text-5xl mb-4">{hasActiveFilters ? '🔍' : '✨'}</div>
           <p className="text-gray-500 font-medium">
-            {hasActiveFilters ? 'No tasks match your filters.' : 'No open tasks right now.'}
+            {hasActiveFilters ? 'No tasks match your filters.' : t('tasks_none')}
           </p>
           <p className="text-sm text-gray-400 mt-1">
-            {hasActiveFilters ? 'Try adjusting your search or filters.' : 'Be the first to post something!'}
+            {hasActiveFilters ? 'Try adjusting your search or filters.' : t('tasks_none_sub')}
           </p>
           <Link href="/tasks/new" className="btn-primary mt-5 inline-flex">
-            Post a task
+            {t('tasks_post')}
           </Link>
         </div>
       )}
