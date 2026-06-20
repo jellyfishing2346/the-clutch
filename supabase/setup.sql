@@ -52,10 +52,16 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   tasks_completed INTEGER NOT NULL DEFAULT 0,
   tasks_posted    INTEGER NOT NULL DEFAULT 0,
   languages       TEXT[] NOT NULL DEFAULT '{"en"}',
+  skills          TEXT[] NOT NULL DEFAULT '{}',
   is_id_verified  BOOLEAN NOT NULL DEFAULT FALSE,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Safety net for existing tables created before `skills` was added here —
+-- CREATE TABLE IF NOT EXISTS above is a no-op on an existing table, so this
+-- is what actually adds the column if it's missing from a prior deployment.
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS skills TEXT[] NOT NULL DEFAULT '{}';
 
 -- ─── TASKS ───────────────────────────────────
 -- location stored as JSONB { "lat": number, "lng": number }
@@ -149,6 +155,41 @@ CREATE TABLE IF NOT EXISTS public.messages (
 
 CREATE INDEX IF NOT EXISTS messages_conversation_idx ON public.messages (conversation_id, created_at DESC);
 
+-- ─── AVATAR STORAGE ───────────────────────────
+
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('avatars', 'avatars', true)
+ON CONFLICT (id) DO NOTHING;
+
+DROP POLICY IF EXISTS "avatars_public_read" ON storage.objects;
+CREATE POLICY "avatars_public_read"
+ON storage.objects FOR SELECT
+USING (bucket_id = 'avatars');
+
+DROP POLICY IF EXISTS "avatars_user_insert" ON storage.objects;
+CREATE POLICY "avatars_user_insert"
+ON storage.objects FOR INSERT
+WITH CHECK (
+  bucket_id = 'avatars'
+  AND (storage.foldername(name))[1] = auth.uid()::text
+);
+
+DROP POLICY IF EXISTS "avatars_user_update" ON storage.objects;
+CREATE POLICY "avatars_user_update"
+ON storage.objects FOR UPDATE
+USING (
+  bucket_id = 'avatars'
+  AND (storage.foldername(name))[1] = auth.uid()::text
+);
+
+DROP POLICY IF EXISTS "avatars_user_delete" ON storage.objects;
+CREATE POLICY "avatars_user_delete"
+ON storage.objects FOR DELETE
+USING (
+  bucket_id = 'avatars'
+  AND (storage.foldername(name))[1] = auth.uid()::text
+);
+
 -- ─── FUNCTIONS & TRIGGERS ────────────────────
 
 -- Auto-create profile + welcome bonus on signup
@@ -167,7 +208,7 @@ BEGIN
   ON CONFLICT (id) DO NOTHING;
 
   INSERT INTO public.credits_transactions (user_id, amount, type, description)
-  VALUES (NEW.id, 20, 'bonus', 'Welcome to Clutch! Here are 20 credits to get started.');
+  VALUES (NEW.id, 20, 'bonus', 'Welcome to clutch! Here are 20 credits to get started.');
 
   RETURN NEW;
 END;
@@ -243,6 +284,37 @@ BEGIN
 END;
 $$;
 
+-- Atomic credits balance increment — never embed supabase.rpc(...) as a
+-- literal field value inside a client-side .update({...}), it silently
+-- does nothing. Always call this as its own rpc() invocation instead.
+CREATE OR REPLACE FUNCTION public.increment_credits(user_id UUID, amount INT)
+RETURNS VOID LANGUAGE sql SECURITY DEFINER AS $$
+  UPDATE public.profiles SET credits_balance = credits_balance + amount WHERE id = user_id;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.increment_credits(UUID, INT) TO authenticated;
+
+-- Recursion-safe accepted-helper check, used by tasks_select below.
+-- SECURITY DEFINER bypasses RLS internally, breaking the circular
+-- reference that would otherwise occur (tasks_select -> task_applications
+-- RLS -> applications_select's subquery back into tasks -> tasks_select...).
+CREATE OR REPLACE FUNCTION public.is_accepted_helper_for_task(_task_id UUID, _user_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.task_applications
+    WHERE task_applications.task_id = _task_id
+    AND task_applications.applicant_id = _user_id
+    AND task_applications.status = 'accepted'
+  );
+$$;
+
+GRANT EXECUTE ON FUNCTION public.is_accepted_helper_for_task(UUID, UUID) TO authenticated, anon;
+
 -- ─── ROW LEVEL SECURITY ──────────────────────
 
 ALTER TABLE public.profiles             ENABLE ROW LEVEL SECURITY;
@@ -265,13 +337,19 @@ CREATE POLICY "profiles_select" ON public.profiles FOR SELECT USING (true);
 CREATE POLICY "profiles_insert" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
 CREATE POLICY "profiles_update" ON public.profiles FOR UPDATE USING (auth.uid() = id);
 
--- Tasks: open tasks are public; creator manages their own
-CREATE POLICY "tasks_select" ON public.tasks FOR SELECT USING (status = 'open' OR creator_id = auth.uid());
+-- Tasks: open tasks are public; creator manages their own; an accepted
+-- helper keeps visibility into a task even after it leaves "open" status.
+CREATE POLICY "tasks_select" ON public.tasks FOR SELECT USING (
+  status = 'open'
+  OR creator_id = auth.uid()
+  OR public.is_accepted_helper_for_task(id, auth.uid())
+);
 CREATE POLICY "tasks_insert" ON public.tasks FOR INSERT WITH CHECK (creator_id = auth.uid());
 CREATE POLICY "tasks_update" ON public.tasks FOR UPDATE USING (creator_id = auth.uid());
 CREATE POLICY "tasks_delete" ON public.tasks FOR DELETE USING (creator_id = auth.uid());
 
--- Applications: applicant + task creator can read; applicant inserts
+-- Applications: applicant + task creator can read; applicant inserts;
+-- task creator can update (accept/reject)
 CREATE POLICY "applications_select" ON public.task_applications
   FOR SELECT USING (
     applicant_id = auth.uid() OR
@@ -291,6 +369,12 @@ CREATE POLICY "reviews_insert" ON public.reviews FOR INSERT WITH CHECK (reviewer
 -- Credits: own only
 CREATE POLICY "credits_select" ON public.credits_transactions FOR SELECT USING (user_id = auth.uid());
 CREATE POLICY "credits_insert" ON public.credits_transactions FOR INSERT WITH CHECK (user_id = auth.uid());
+
+-- Conversations: participants only
+CREATE POLICY "conversations_select" ON public.conversations
+  FOR SELECT USING (auth.uid() = ANY(participant_ids));
+CREATE POLICY "conversations_insert" ON public.conversations
+  FOR INSERT WITH CHECK (auth.uid() = ANY(participant_ids));
 
 -- Messages: participants only
 CREATE POLICY "messages_select" ON public.messages
@@ -322,3 +406,4 @@ SELECT
 FROM auth.users
 WHERE id NOT IN (SELECT id FROM public.profiles)
 ON CONFLICT (id) DO NOTHING;
+
