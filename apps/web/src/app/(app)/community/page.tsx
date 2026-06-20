@@ -283,7 +283,7 @@ export default function CommunityPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-1">Find your way to help</h2>
             <p className="text-sm text-gray-500">
               Everyone contributes differently. Whether you prefer quiet drop-offs or lively group tasks,
-              there's a place for you in Clutch.
+              there's a place for you in clutch.
             </p>
           </div>
 

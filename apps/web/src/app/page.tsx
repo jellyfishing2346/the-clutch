@@ -34,7 +34,7 @@ export default function LandingPage() {
       {/* Nav */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-[#fdfaf5]/95 backdrop-blur border-b border-purple-100">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <span className="logo-frame text-xl">Clutch</span>
+          <span className="logo-frame text-xl">clutch</span>
           <nav className="hidden md:flex items-center gap-6 text-sm text-gray-600">
             <a href="#how-it-works" className="hover:text-clutch-600 transition-colors">How it works</a>
             <a href="#categories" className="hover:text-clutch-600 transition-colors">Categories</a>
@@ -59,7 +59,7 @@ export default function LandingPage() {
             <span className="text-gradient">ready to help.</span>
           </h1>
           <p className="text-xl text-gray-500 mb-10 max-w-2xl mx-auto leading-relaxed">
-            Clutch connects you with people nearby for everyday tasks — carrying groceries,
+            clutch connects you with people nearby for everyday tasks — carrying groceries,
             tech support, dog walks, and more. Real neighbors, real help, real trust.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -86,7 +86,7 @@ export default function LandingPage() {
       {/* How it works */}
       <section id="how-it-works" className="py-20 px-4 bg-[#fdfaf5]">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-3">How Clutch works</h2>
+          <h2 className="text-3xl font-bold text-center text-gray-900 mb-3">How clutch works</h2>
           <p className="text-center text-gray-500 mb-14 text-lg">Three simple steps to get or give help.</p>
           <div className="grid md:grid-cols-3 gap-8">
             {HOW_IT_WORKS.map(step => (
@@ -105,7 +105,7 @@ export default function LandingPage() {
       {/* Categories */}
       <section id="categories" className="py-20 px-4 bg-orange-50">
         <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-center text-gray-900 mb-3">What can Clutch help with?</h2>
+          <h2 className="text-3xl font-bold text-center text-gray-900 mb-3">What can clutch help with?</h2>
           <p className="text-center text-gray-500 mb-14 text-lg">From simple favors to skilled work — all in your neighborhood.</p>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {FEATURED_CATEGORIES.map(cat => {
@@ -132,7 +132,7 @@ export default function LandingPage() {
               </h2>
               <p className="text-gray-500 mb-6 leading-relaxed">
                 Not every task needs the same level of trust. Grabbing groceries is different
-                from fixing an appliance. Clutch matches trust requirements to the task —
+                from fixing an appliance. clutch matches trust requirements to the task —
                 so you always feel safe.
               </p>
               <div className="space-y-3">
@@ -191,7 +191,7 @@ export default function LandingPage() {
       <footer className="py-10 px-4 bg-gray-900 text-gray-400 text-sm">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div>
-            <span className="text-white font-bold text-lg">Clutch</span>
+            <span className="text-white font-bold text-lg">clutch</span>
             <span className="ml-2">— Neighbors helping neighbors across NYC.</span>
           </div>
           <div className="flex gap-6">

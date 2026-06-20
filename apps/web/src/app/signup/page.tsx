@@ -119,7 +119,7 @@ function SignupForm() {
     <div className="min-h-screen bg-gradient-to-br from-clutch-50 via-white to-purple-50 flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <Link href="/" className="logo-frame text-3xl">Clutch</Link>
+          <Link href="/" className="logo-frame text-3xl">clutch</Link>
           <p className="text-gray-500 mt-2">Join your neighborhood network.</p>
         </div>
 
@@ -236,7 +236,7 @@ function SignupForm() {
             >
               {loading
                 ? <><span className="animate-spin inline-block">◌</span> Creating account...</>
-                : step === 1 ? 'Continue →' : 'Join Clutch →'
+                : step === 1 ? 'Continue →' : 'Join clutch →'
               }
             </button>
           </form>

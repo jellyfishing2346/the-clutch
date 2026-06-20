@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     max_tokens: 400,
     messages: [{
       role: 'user',
-      content: `You are helping someone post a task on Clutch, a hyperlocal NYC community task marketplace.
+      content: `You are helping someone post a task on clutch, a hyperlocal NYC community task marketplace.
 
 Task title: "${title}"
 Location: ${neighborhood ?? 'NYC'}${borough ? `, ${borough}` : ''}

@@ -2,12 +2,12 @@ import Link from 'next/link'
 
 const FAQ = [
   {
-    q: 'Is Clutch free to use?',
-    a: 'Joining is always free. You can post tasks using Clutch Credits (earned by helping others) or pay helpers directly with cash. New members get 20 credits free just for signing up.',
+    q: 'Is clutch free to use?',
+    a: 'Joining is always free. You can post tasks using clutch Credits (earned by helping others) or pay helpers directly with cash. New members get 20 credits free just for signing up.',
   },
   {
     q: 'How does trust work?',
-    a: 'Every Clutch member starts as New. As you complete tasks and collect reviews, your trust level grows — from Established to Trusted to Verified. Higher trust unlocks more task types and signals reliability to your neighbors.',
+    a: 'Every clutch member starts as New. As you complete tasks and collect reviews, your trust level grows — from Established to Trusted to Verified. Higher trust unlocks more task types and signals reliability to your neighbors.',
   },
   {
     q: 'Is my personal information safe?',
@@ -19,11 +19,11 @@ const FAQ = [
   },
   {
     q: 'What if something goes wrong?',
-    a: 'Clutch has a review and report system. If a helper is late, unprofessional, or a task goes poorly, you can leave a review and flag the issue. Repeated reports reduce a member\'s trust level automatically.',
+    a: 'clutch has a review and report system. If a helper is late, unprofessional, or a task goes poorly, you can leave a review and flag the issue. Repeated reports reduce a member\'s trust level automatically.',
   },
   {
     q: 'Do I have to pay in cash?',
-    a: 'No — cash is just one option. You can use Clutch Credits, arrange a skill exchange, or post a free community task (helpers earn 10 credits for free tasks). The payment type is always set in advance, before anyone accepts.',
+    a: 'No — cash is just one option. You can use clutch Credits, arrange a skill exchange, or post a free community task (helpers earn 10 credits for free tasks). The payment type is always set in advance, before anyone accepts.',
   },
 ]
 
@@ -33,7 +33,7 @@ export default function AboutPage() {
       {/* Nav */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-[#fdfaf5]/95 backdrop-blur border-b border-purple-100">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <Link href="/" className="logo-frame text-xl">Clutch</Link>
+          <Link href="/" className="logo-frame text-xl">clutch</Link>
           <div className="flex items-center gap-3">
             <Link href="/login" className="btn-ghost text-sm py-2">Sign in</Link>
             <Link href="/signup" className="btn-primary text-sm py-2 px-4">Get started</Link>
@@ -49,7 +49,7 @@ export default function AboutPage() {
             <span className="text-gradient">never stops helping.</span>
           </h1>
           <p className="text-lg text-gray-500 leading-relaxed max-w-xl mx-auto">
-            Clutch started with one idea: NYC is full of people who want to help each other, they just need a way to connect.
+            clutch started with one idea: NYC is full of people who want to help each other, they just need a way to connect.
           </p>
         </div>
       </section>
@@ -65,7 +65,7 @@ export default function AboutPage() {
               Getting tech help when you don't know who to call.
             </p>
             <p className="text-gray-500 leading-relaxed">
-              Clutch makes it easy to ask and easy to help. We designed the trust system so that helping earns you
+              clutch makes it easy to ask and easy to help. We designed the trust system so that helping earns you
               something back — not just good feeling, but real credits you can spend when you need help next.
               That's a community economy.
             </p>
@@ -109,7 +109,7 @@ export default function AboutPage() {
               {
                 icon: '🌍',
                 title: 'Every community matters',
-                desc: 'NYC is one of the most diverse cities on earth. Clutch is built for everyone — every borough, every culture, every language.',
+                desc: 'NYC is one of the most diverse cities on earth. clutch is built for everyone — every borough, every culture, every language.',
               },
             ].map(v => (
               <div key={v.title} className="card p-6">
@@ -146,7 +146,7 @@ export default function AboutPage() {
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-2xl font-bold mb-3">Ready to meet your neighbors?</h2>
           <p className="text-white/80 mb-7 text-sm">
-            Join Clutch today and get 20 free credits to start with.
+            Join clutch today and get 20 free credits to start with.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link href="/signup" className="bg-white text-clutch-700 font-semibold px-7 py-3.5 rounded-2xl hover:bg-orange-50 transition-colors text-sm">
@@ -163,7 +163,7 @@ export default function AboutPage() {
       <footer className="py-10 px-4 bg-gray-900 text-gray-400 text-sm">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div>
-            <span className="text-white font-bold text-lg">Clutch</span>
+            <span className="text-white font-bold text-lg">clutch</span>
             <span className="ml-2">— Neighbors helping neighbors across NYC.</span>
           </div>
           <div className="flex gap-6">

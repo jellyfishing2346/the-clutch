@@ -65,7 +65,7 @@ export default function CreditsPage() {
         <div className="text-6xl font-bold mb-1">
           {loading ? <span className="animate-pulse">—</span> : balance ?? 0}
         </div>
-        <div className="text-clutch-100 text-sm font-medium">Clutch Credits</div>
+        <div className="text-clutch-100 text-sm font-medium">clutch Credits</div>
         <div className="mt-4 flex justify-center gap-4 text-xs text-white/80">
           <span>↑ Earned this month: {earnedThisMonth} CR</span>
           <span>↓ Spent this month: {spentThisMonth} CR</span>

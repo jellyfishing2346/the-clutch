@@ -338,7 +338,7 @@ export default function NewTaskPage() {
               <label className="label">How will you pay? <span className="text-red-400">*</span></label>
               <div className="grid grid-cols-2 gap-3">
                 {([
-                  { value: 'credits', label: '◈ Credits', desc: 'Use your Clutch credits' },
+                  { value: 'credits', label: '◈ Credits', desc: 'Use your clutch credits' },
                   { value: 'cash', label: '$ Cash', desc: 'Pay in person' },
                   { value: 'exchange', label: '⇄ Exchange', desc: 'Trade skills or goods' },
                   { value: 'free', label: '♥ Free', desc: 'No payment, just community' },
@@ -395,7 +395,7 @@ export default function NewTaskPage() {
               <div className="bg-green-50 rounded-xl p-4 text-sm text-green-700">
                 <div className="font-semibold mb-1">♥ Community task</div>
                 <div className="text-green-600 text-xs">
-                  Your helper will earn <strong>10 Clutch Credits</strong> for completing this for free!
+                  Your helper will earn <strong>10 clutch Credits</strong> for completing this for free!
                 </div>
               </div>
             )}

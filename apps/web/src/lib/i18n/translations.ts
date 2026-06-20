@@ -15,7 +15,7 @@ export const translations = {
     hero_badge: 'Building community across NYC neighborhoods',
     hero_title_1: 'Your neighbors are',
     hero_title_2: 'ready to help.',
-    hero_sub: 'Clutch connects you with people nearby for everyday tasks — carrying groceries, tech support, dog walks, and more. Real neighbors, real help, real trust.',
+    hero_sub: 'clutch connects you with people nearby for everyday tasks — carrying groceries, tech support, dog walks, and more. Real neighbors, real help, real trust.',
     hero_cta_primary: 'Find help near me →',
     hero_cta_secondary: 'Browse open tasks',
     stat_free: 'Free',
@@ -28,7 +28,7 @@ export const translations = {
     stat_trust_label: 'Trust system',
 
     // How it works
-    how_title: 'How Clutch works',
+    how_title: 'How clutch works',
     how_sub: 'Three simple steps to get or give help.',
     step1_title: 'Post or browse tasks',
     step1_desc: 'Share what you need or find nearby tasks you can help with — sorted by distance from you.',
@@ -51,7 +51,7 @@ export const translations = {
     signup_borough: 'Borough',
     signup_neighborhood: 'Neighborhood',
     signup_submit_1: 'Continue →',
-    signup_submit_2: 'Join Clutch →',
+    signup_submit_2: 'Join clutch →',
     signup_have_account: 'Already have an account?',
     signup_signin_link: 'Sign in',
 
@@ -85,7 +85,7 @@ export const translations = {
     hero_badge: 'Construyendo comunidad en los vecindarios de NYC',
     hero_title_1: 'Tus vecinos están',
     hero_title_2: 'listos para ayudar.',
-    hero_sub: 'Clutch te conecta con personas cercanas para tareas cotidianas — cargar comestibles, soporte técnico, pasear perros y más. Vecinos reales, ayuda real, confianza real.',
+    hero_sub: 'clutch te conecta con personas cercanas para tareas cotidianas — cargar comestibles, soporte técnico, pasear perros y más. Vecinos reales, ayuda real, confianza real.',
     hero_cta_primary: 'Encontrar ayuda cerca →',
     hero_cta_secondary: 'Ver tareas disponibles',
     stat_free: 'Gratis',
@@ -97,7 +97,7 @@ export const translations = {
     stat_trust: '4 niveles',
     stat_trust_label: 'Sistema de confianza',
 
-    how_title: 'Cómo funciona Clutch',
+    how_title: 'Cómo funciona clutch',
     how_sub: 'Tres pasos simples para obtener o dar ayuda.',
     step1_title: 'Publica o busca tareas',
     step1_desc: 'Comparte lo que necesitas o encuentra tareas cercanas en las que puedas ayudar.',
@@ -119,7 +119,7 @@ export const translations = {
     signup_borough: 'Distrito',
     signup_neighborhood: 'Vecindario',
     signup_submit_1: 'Continuar →',
-    signup_submit_2: 'Unirse a Clutch →',
+    signup_submit_2: 'Unirse a clutch →',
     signup_have_account: '¿Ya tienes una cuenta?',
     signup_signin_link: 'Iniciar sesión',
 
@@ -151,7 +151,7 @@ export const translations = {
     hero_badge: '在纽约市各社区建立联系',
     hero_title_1: '你的邻居们',
     hero_title_2: '随时准备帮忙。',
-    hero_sub: 'Clutch 将您与附近的人联系起来，处理日常任务——搬运杂货、技术支持、遛狗等。真实的邻居，真实的帮助，真实的信任。',
+    hero_sub: 'clutch 将您与附近的人联系起来，处理日常任务——搬运杂货、技术支持、遛狗等。真实的邻居，真实的帮助，真实的信任。',
     hero_cta_primary: '在我附近寻求帮助 →',
     hero_cta_secondary: '浏览开放任务',
     stat_free: '免费',
@@ -163,7 +163,7 @@ export const translations = {
     stat_trust: '4级',
     stat_trust_label: '信任体系',
 
-    how_title: 'Clutch 如何运作',
+    how_title: 'clutch 如何运作',
     how_sub: '三个简单步骤即可获得或提供帮助。',
     step1_title: '发布或浏览任务',
     step1_desc: '分享您的需求，或找到您可以帮忙的附近任务。',
@@ -185,7 +185,7 @@ export const translations = {
     signup_borough: '行政区',
     signup_neighborhood: '街区',
     signup_submit_1: '继续 →',
-    signup_submit_2: '加入 Clutch →',
+    signup_submit_2: '加入 clutch →',
     signup_have_account: '已有账户？',
     signup_signin_link: '登录',
 

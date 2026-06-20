@@ -54,7 +54,7 @@ export function Navbar() {
       {/* Desktop top nav */}
       <header className="hidden md:flex fixed top-0 left-0 right-0 z-50 h-16 bg-[#fdfaf5]/95 backdrop-blur border-b border-purple-100 px-6 items-center justify-between">
         <Link href="/home" className="flex items-center gap-2">
-          <span className="logo-frame text-xl">Clutch</span>
+          <span className="logo-frame text-xl">clutch</span>
           <span className="text-xs font-normal text-gray-400">NYC</span>
         </Link>
 

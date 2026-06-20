@@ -72,14 +72,14 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params
   const result = slugToNeighborhood(slug)
-  if (!result) return { title: 'Neighborhood | Clutch' }
+  if (!result) return { title: 'Neighborhood | clutch' }
   const { neighborhood, borough } = result
   return {
-    title: `Tasks & Help in ${neighborhood}, ${borough} | Clutch`,
-    description: `Find neighbors offering help in ${neighborhood}, ${borough}. Post tasks, earn credits, and build community on Clutch — NYC's hyperlocal task marketplace.`,
-    keywords: [`${neighborhood} tasks`, `${neighborhood} help`, `${borough} community`, 'neighborhood tasks NYC', 'Clutch'],
+    title: `Tasks & Help in ${neighborhood}, ${borough} | clutch`,
+    description: `Find neighbors offering help in ${neighborhood}, ${borough}. Post tasks, earn credits, and build community on clutch — NYC's hyperlocal task marketplace.`,
+    keywords: [`${neighborhood} tasks`, `${neighborhood} help`, `${borough} community`, 'neighborhood tasks NYC', 'clutch'],
     openGraph: {
-      title: `${neighborhood} Community | Clutch`,
+      title: `${neighborhood} Community | clutch`,
       description: `Neighbors helping neighbors in ${neighborhood}, ${borough}.`,
       type: 'website',
     },
@@ -101,7 +101,7 @@ export default async function NeighborhoodPage({ params }: { params: Promise<{ s
     <div className="min-h-screen" style={{ background: '#fdfaf5' }}>
       {/* Nav */}
       <header className="border-b border-purple-100 bg-[#fdfaf5]/95 backdrop-blur px-6 py-4 flex items-center justify-between">
-        <Link href="/" className="logo-frame text-xl">Clutch</Link>
+        <Link href="/" className="logo-frame text-xl">clutch</Link>
         <div className="flex items-center gap-4">
           <Link href="/login" className="text-sm text-gray-500 hover:text-gray-700">Sign in</Link>
           <Link href="/signup" className="btn-primary text-sm py-2 px-5">Join free</Link>
@@ -176,7 +176,7 @@ export default async function NeighborhoodPage({ params }: { params: Promise<{ s
       {/* How it works */}
       <section className="max-w-4xl mx-auto px-6 py-16">
         <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">
-          How Clutch works in {neighborhood}
+          How clutch works in {neighborhood}
         </h2>
         <div className="grid md:grid-cols-3 gap-6">
           {[
@@ -198,7 +198,7 @@ export default async function NeighborhoodPage({ params }: { params: Promise<{ s
       {/* Nearby neighborhoods */}
       <section className="bg-purple-50/40 py-12">
         <div className="max-w-4xl mx-auto px-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Other {borough} neighborhoods on Clutch</h2>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Other {borough} neighborhoods on clutch</h2>
           <div className="flex flex-wrap gap-2">
             {NEIGHBORHOODS[borough]
               .filter(h => h !== neighborhood)
@@ -222,13 +222,13 @@ export default async function NeighborhoodPage({ params }: { params: Promise<{ s
         </h2>
         <p className="text-gray-500 mb-8">Join for free and get 20 credits to post your first task.</p>
         <Link href="/signup" className="btn-primary py-3 px-10 text-base">
-          Join Clutch free →
+          Join clutch free →
         </Link>
       </section>
 
       {/* Footer */}
       <footer className="border-t border-gray-100 py-8 px-6 text-center text-sm text-gray-400">
-        <Link href="/" className="logo-frame mr-3">Clutch</Link>
+        <Link href="/" className="logo-frame mr-3">clutch</Link>
         Neighbors helping neighbors across NYC ·{' '}
         <Link href="/about" className="hover:text-gray-600">About</Link>
       </footer>

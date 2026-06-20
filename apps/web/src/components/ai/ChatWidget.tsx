@@ -25,7 +25,7 @@ export function ChatWidget() {
     if (open && messages.length === 0) {
       setMessages([{
         role: 'assistant',
-        content: "Hi neighbor! 👋 I'm Clutch's community assistant. Ask me anything about how the platform works, credits, trust levels, or finding help near you.",
+        content: "Hi neighbor! 👋 I'm clutch's community assistant. Ask me anything about how the platform works, credits, trust levels, or finding help near you.",
       }])
     }
     if (open) setTimeout(() => inputRef.current?.focus(), 100)
@@ -98,8 +98,8 @@ export function ChatWidget() {
           <div className="gradient-brand px-4 py-3 flex items-center gap-2">
             <span className="text-white text-lg">🤝</span>
             <div>
-              <div className="text-white font-semibold text-sm leading-tight">Clutch Assistant</div>
-              <div className="text-white/70 text-[11px]">Ask me anything about Clutch</div>
+              <div className="text-white font-semibold text-sm leading-tight">clutch Assistant</div>
+              <div className="text-white/70 text-[11px]">Ask me anything about clutch</div>
             </div>
           </div>
 
