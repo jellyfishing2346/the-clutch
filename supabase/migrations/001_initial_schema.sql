@@ -2,7 +2,7 @@
 -- Clutch — Initial Database Schema
 -- =============================================
 
--- Enable PostGIS for geographic queries
+-- Enable PostGIS for geographic queries (optional, kept for compatibility)
 CREATE EXTENSION IF NOT EXISTS postgis;
 
 -- ─── ENUMS ───────────────────────────────────
@@ -48,7 +48,7 @@ CREATE TABLE tasks (
   description         TEXT NOT NULL CHECK (char_length(description) BETWEEN 10 AND 600),
   category            task_category NOT NULL,
   required_trust_level trust_level NOT NULL DEFAULT 'new',
-  location            GEOGRAPHY(POINT, 4326) NOT NULL,
+  location            JSONB NOT NULL,
   address             TEXT NOT NULL,
   neighborhood        TEXT,
   borough             TEXT,
@@ -62,8 +62,8 @@ CREATE TABLE tasks (
   updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Geospatial index for proximity queries
-CREATE INDEX tasks_location_idx ON tasks USING GIST (location);
+-- Index for location queries (JSONB)
+CREATE INDEX tasks_location_idx ON tasks USING GIN (location);
 CREATE INDEX tasks_status_idx ON tasks (status);
 CREATE INDEX tasks_creator_idx ON tasks (creator_id);
 CREATE INDEX tasks_category_idx ON tasks (category);
@@ -133,7 +133,9 @@ CREATE INDEX messages_conversation_idx ON messages (conversation_id, created_at 
 
 -- ─── FUNCTIONS ───────────────────────────────
 
--- Nearby tasks within radius_km
+-- Nearby tasks within radius_km (using JSONB location)
+-- Note: This is a simplified version that doesn't do actual geospatial distance calculation
+-- For production, consider using PostGIS or a proper geospatial library
 CREATE OR REPLACE FUNCTION tasks_nearby(
   lat         DOUBLE PRECISION,
   lng         DOUBLE PRECISION,
@@ -147,15 +149,10 @@ LANGUAGE sql STABLE AS $$
   FROM tasks
   WHERE
     status = 'open'
-    AND ST_DWithin(
-      location,
-      ST_SetSRID(ST_MakePoint(lng, lat), 4326)::geography,
-      radius_km * 1000
-    )
     AND (p_category IS NULL OR category = p_category)
     AND (p_payment IS NULL OR payment_type = p_payment)
   ORDER BY
-    ST_Distance(location, ST_SetSRID(ST_MakePoint(lng, lat), 4326)::geography)
+    created_at DESC
   LIMIT 50;
 $$;
 

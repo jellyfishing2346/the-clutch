@@ -48,29 +48,38 @@ export async function processReferral(referralCode: string): Promise<boolean> {
   if (refError) return false
 
   // Credit the referrer (+10 CR)
-  await supabase.from('credits_transactions').insert({
+  const { error: referrerTxError } = await supabase.from('credits_transactions').insert({
     user_id: referrer.id,
     amount: 10,
     type: 'bonus',
     description: 'Referral bonus — a neighbor joined with your link',
   })
-  await supabase.rpc('increment_credits', { user_id: referrer.id, amount: 10 })
+  if (referrerTxError) return false
+
+  const { error: referrerCreditError } = await supabase.rpc('increment_credits', { user_id: referrer.id, amount: 10 })
+  if (referrerCreditError) return false
 
   // Credit the new user (+10 CR welcome referral bonus, on top of signup bonus)
-  await supabase.from('credits_transactions').insert({
+  const { error: userTxError } = await supabase.from('credits_transactions').insert({
     user_id: user.id,
     amount: 10,
     type: 'bonus',
     description: 'Joined via referral — welcome bonus',
   })
-  await supabase.rpc('increment_credits', { user_id: user.id, amount: 10 })
-  await supabase.from('profiles').update({ referred_by: referrer.id }).eq('id', user.id)
+  if (userTxError) return false
+
+  const { error: userCreditError } = await supabase.rpc('increment_credits', { user_id: user.id, amount: 10 })
+  if (userCreditError) return false
+
+  const { error: profileError } = await supabase.from('profiles').update({ referred_by: referrer.id }).eq('id', user.id)
+  if (profileError) return false
 
   // Mark referral as credited
-  await supabase
+  const { error: creditError } = await supabase
     .from('referrals')
     .update({ credited_at: new Date().toISOString() })
     .eq('referred_id', user.id)
+  if (creditError) return false
 
   return true
 }

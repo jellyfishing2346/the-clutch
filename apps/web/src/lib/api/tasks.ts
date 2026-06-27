@@ -33,7 +33,46 @@ export async function fetchNearbyTasks(opts: FetchTasksOptions = {}): Promise<Ta
     console.error('fetchNearbyTasks:', error.message)
     return []
   }
-  return data as Task[]
+
+  let tasks = data as Task[]
+
+  // Filter and sort by distance if location parameters are provided
+  if (opts.near && opts.radiusKm) {
+    tasks = tasks
+      .filter(task => {
+        const distance = calculateDistance(
+          opts.near!.lat,
+          opts.near!.lng,
+          task.location.lat,
+          task.location.lng
+        )
+        return distance <= opts.radiusKm!
+      })
+      .sort((a, b) => {
+        const distA = calculateDistance(opts.near!.lat, opts.near!.lng, a.location.lat, a.location.lng)
+        const distB = calculateDistance(opts.near!.lat, opts.near!.lng, b.location.lat, b.location.lng)
+        return distA - distB
+      })
+  }
+
+  return tasks
+}
+
+// Haversine formula to calculate distance between two points in kilometers
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371 // Earth's radius in kilometers
+  const dLat = toRadians(lat2 - lat1)
+  const dLon = toRadians(lon2 - lon1)
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRadians(lat1)) * Math.cos(toRadians(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  return R * c
+}
+
+function toRadians(degrees: number): number {
+  return degrees * (Math.PI / 180)
 }
 
 export async function fetchTasksByUser(userId: string): Promise<Task[]> {
@@ -83,6 +122,7 @@ interface CreateTaskPayload {
 }
 
 export async function createTask(payload: CreateTaskPayload): Promise<{ id: string } | null> {
+  if (IS_DEMO) return { id: 'mock-task-id' }
   const supabase = createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -132,6 +172,7 @@ export async function cancelTask(taskId: string): Promise<boolean> {
 }
 
 export async function applyToTask(taskId: string, message: string): Promise<boolean> {
+  if (IS_DEMO) return true
   const supabase = createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
@@ -227,7 +268,7 @@ export async function acceptApplication(appId: string, taskId: string, applicant
   const { data: conv, error: convErr } = await supabase
     .from('conversations')
     .insert({ task_id: taskId, participant_ids: [user.id, applicantId] })
-    .select('id')
+    .select('id, participant_ids')
     .single()
 
   if (convErr) return null

@@ -83,9 +83,15 @@ function SignupForm() {
       return
     }
 
-    // Process referral bonus if user came via a referral link
+    // Store referral code for later processing if email confirmation is required
     if (refCode) {
-      await processReferral(refCode).catch(() => {})
+      if (data.session) {
+        // Process immediately if session exists (no email confirmation required)
+        await processReferral(refCode).catch(() => {})
+      } else {
+        // Store for post-login processing if email confirmation is required
+        localStorage.setItem('pending_referral', refCode)
+      }
     }
 
     if (data.session) {

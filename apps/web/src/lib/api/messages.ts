@@ -33,6 +33,7 @@ export async function fetchConversations(): Promise<Conversation[]> {
 
   return data.map(c => ({
     ...c,
+    participant_ids: c.participant_ids as string[],
     last_message: Array.isArray(c.last_message) ? (c.last_message[0] ?? null) : c.last_message,
     participants: (c.participant_ids as string[])
       .map(pid => profiles?.find(p => p.id === pid))
@@ -86,5 +87,5 @@ export async function fetchConversationById(id: string): Promise<Conversation | 
     .select('*')
     .in('id', conv.participant_ids)
 
-  return { ...conv, participants: participants ?? [] } as Conversation
+  return { ...conv, participant_ids: conv.participant_ids as string[], participants: participants ?? [] } as Conversation
 }

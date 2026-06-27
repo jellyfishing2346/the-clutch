@@ -111,6 +111,7 @@ export interface Conversation {
   id: string
   task_id: string
   task?: Task
+  participant_ids: string[]
   participants: UserProfile[]
   last_message: Message | null
   created_at: string

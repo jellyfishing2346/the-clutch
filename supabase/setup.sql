@@ -52,16 +52,21 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   tasks_completed INTEGER NOT NULL DEFAULT 0,
   tasks_posted    INTEGER NOT NULL DEFAULT 0,
   languages       TEXT[] NOT NULL DEFAULT '{"en"}',
-  skills          TEXT[] NOT NULL DEFAULT '{}',
   is_id_verified  BOOLEAN NOT NULL DEFAULT FALSE,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Safety net for existing tables created before `skills` was added here —
--- CREATE TABLE IF NOT EXISTS above is a no-op on an existing table, so this
--- is what actually adds the column if it's missing from a prior deployment.
+-- Safety net for existing tables created before these columns were added —
+-- CREATE TABLE IF NOT EXISTS above is a no-op on an existing table, so these
+-- ALTER statements are what actually add the columns if they're missing from a prior deployment.
 ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS skills TEXT[] NOT NULL DEFAULT '{}';
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS referral_code TEXT UNIQUE DEFAULT SUBSTRING(gen_random_uuid()::text FROM 1 FOR 8);
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS referred_by UUID REFERENCES public.profiles(id) ON DELETE SET NULL;
+
+-- Ensure every existing row gets a referral code
+UPDATE public.profiles SET referral_code = SUBSTRING(gen_random_uuid()::text FROM 1 FOR 8)
+WHERE referral_code IS NULL;
 
 -- ─── TASKS ───────────────────────────────────
 -- location stored as JSONB { "lat": number, "lng": number }
@@ -135,6 +140,19 @@ CREATE TABLE IF NOT EXISTS public.credits_transactions (
 );
 
 CREATE INDEX IF NOT EXISTS credits_user_idx ON public.credits_transactions (user_id);
+
+-- ─── REFERRALS ────────────────────────────────
+
+CREATE TABLE IF NOT EXISTS public.referrals (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  referrer_id  UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  referred_id  UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  credited_at  TIMESTAMPTZ,          -- NULL until credits are issued
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (referred_id)               -- each user can only be referred once
+);
+
+CREATE INDEX IF NOT EXISTS referrals_referrer_idx ON public.referrals (referrer_id);
 
 -- ─── CONVERSATIONS & MESSAGES ─────────────────
 
@@ -331,6 +349,7 @@ ALTER TABLE public.tasks                ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.task_applications    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reviews              ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.credits_transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.referrals            ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.conversations        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.messages             ENABLE ROW LEVEL SECURITY;
 
@@ -378,6 +397,12 @@ CREATE POLICY "reviews_insert" ON public.reviews FOR INSERT WITH CHECK (reviewer
 -- Credits: own only
 CREATE POLICY "credits_select" ON public.credits_transactions FOR SELECT USING (user_id = auth.uid());
 CREATE POLICY "credits_insert" ON public.credits_transactions FOR INSERT WITH CHECK (user_id = auth.uid());
+
+-- Referrals: referrer and referred can read; referred can insert
+CREATE POLICY "referrals_select" ON public.referrals
+  FOR SELECT USING (referrer_id = auth.uid() OR referred_id = auth.uid());
+CREATE POLICY "referrals_insert" ON public.referrals
+  FOR INSERT WITH CHECK (referred_id = auth.uid());
 
 -- Conversations: participants only
 CREATE POLICY "conversations_select" ON public.conversations

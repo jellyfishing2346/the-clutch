@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { processReferral } from '@/lib/api/referrals'
 
 const IS_DEMO = !process.env.NEXT_PUBLIC_SUPABASE_URL ||
   process.env.NEXT_PUBLIC_SUPABASE_URL.includes('your-project')
@@ -37,6 +38,13 @@ export default function LoginPage() {
       }
       setLoading(false)
       return
+    }
+
+    // Process pending referral if user signed up with a referral link but required email confirmation
+    const pendingReferral = localStorage.getItem('pending_referral')
+    if (pendingReferral) {
+      await processReferral(pendingReferral).catch(() => {})
+      localStorage.removeItem('pending_referral')
     }
 
     router.push('/home')
