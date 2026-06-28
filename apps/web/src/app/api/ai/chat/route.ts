@@ -1,6 +1,11 @@
 import { NextRequest } from 'next/server'
+import { rateLimit } from '@/lib/rate-limit'
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY
+
+// Rate limit: 10 requests per minute per IP/user
+const RATE_LIMIT = 10
+const RATE_WINDOW_MS = 60 * 1000 // 1 minute
 
 const SYSTEM_PROMPT = `You are clutch's friendly community assistant. clutch is a hyperlocal NYC task marketplace where neighbors help neighbors with everyday tasks in exchange for credits or cash.
 
@@ -20,6 +25,24 @@ Keep responses short — 2–4 sentences max unless a list is clearly needed. Th
 export async function POST(req: NextRequest) {
   if (!GROQ_API_KEY) {
     return new Response('AI not configured', { status: 503 })
+  }
+
+  // Rate limiting
+  const identifier = req.headers.get('x-forwarded-for') ||
+                     req.headers.get('x-real-ip') ||
+                     'anonymous'
+  const rateLimitResult = rateLimit(identifier, RATE_LIMIT, RATE_WINDOW_MS)
+
+  if (!rateLimitResult.success) {
+    return new Response('Too many requests', {
+      status: 429,
+      headers: {
+        'X-RateLimit-Limit': RATE_LIMIT.toString(),
+        'X-RateLimit-Remaining': '0',
+        'X-RateLimit-Reset': new Date(rateLimitResult.resetTime).toISOString(),
+        'Retry-After': Math.ceil((rateLimitResult.resetTime - Date.now()) / 1000).toString(),
+      },
+    })
   }
 
   const { messages } = await req.json()
@@ -98,7 +121,12 @@ export async function POST(req: NextRequest) {
     })
 
     return new Response(readable, {
-      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'X-RateLimit-Limit': RATE_LIMIT.toString(),
+        'X-RateLimit-Remaining': rateLimitResult.remaining.toString(),
+        'X-RateLimit-Reset': new Date(rateLimitResult.resetTime).toISOString(),
+      },
     })
   } catch (error) {
     console.error('Groq request error:', error)

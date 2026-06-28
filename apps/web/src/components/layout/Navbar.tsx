@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { Avatar } from '@/components/ui/Avatar'
 import { createClient } from '@/lib/supabase/client'
 import { fetchProfile } from '@/lib/api/users'
+import { fetchUnreadCount } from '@/lib/api/notifications'
 import { useLanguage } from '@/lib/i18n/LanguageContext'
 import type { Locale } from '@/lib/i18n/translations'
 import type { UserProfile } from 'shared'
@@ -18,11 +19,12 @@ const LOCALES: { code: Locale; label: string }[] = [
 ]
 
 const NAV_ITEMS = [
-  { href: '/home',      label: 'Map',       icon: '🗺️' },
-  { href: '/tasks',     label: 'Tasks',     icon: '📋' },
-  { href: '/tasks/new', label: 'Post',      icon: '＋', highlight: true },
-  { href: '/community', label: 'Community', icon: '🏘️' },
-  { href: '/profile',   label: 'Profile',   icon: '👤' },
+  { href: '/home',          label: 'Map',       icon: '🗺️' },
+  { href: '/tasks',         label: 'Tasks',     icon: '📋' },
+  { href: '/tasks/new',     label: 'Post',      icon: '＋', highlight: true },
+  { href: '/notifications', label: 'Alerts',    icon: '🔔' },
+  { href: '/community',     label: 'Community', icon: '🏘️' },
+  { href: '/profile',       label: 'Profile',   icon: '👤' },
 ]
 
 export function Navbar() {
@@ -30,6 +32,7 @@ export function Navbar() {
   const { locale, setLocale } = useLanguage()
   const [me, setMe] = useState<UserProfile | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
+  const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
     const supabase = createClient()
@@ -39,6 +42,7 @@ export function Navbar() {
       fetchProfile(user.id).then(profile => {
         if (profile) setMe(profile)
       })
+      fetchUnreadCount().then(count => setUnreadCount(count))
     })
   }, [])
 
@@ -61,18 +65,24 @@ export function Navbar() {
         <nav className="flex items-center gap-1">
           {NAV_ITEMS.filter(i => i.href !== '/tasks/new').map(item => {
             const href = item.href === '/profile' ? profileHref : item.href
+            const showBadge = item.href === '/notifications' && unreadCount > 0
             return (
               <Link
                 key={item.href}
                 href={href}
                 className={cn(
-                  'px-4 py-2 rounded-xl text-sm font-medium transition-colors',
+                  'px-4 py-2 rounded-xl text-sm font-medium transition-colors relative',
                   isActive(item.href)
                     ? 'bg-clutch-50 text-clutch-700'
                     : 'text-gray-600 hover:bg-gray-50'
                 )}
               >
                 {item.label}
+                {showBadge && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
               </Link>
             )
           })}
@@ -114,6 +124,7 @@ export function Navbar() {
           {NAV_ITEMS.map(item => {
             const href = item.href === '/profile' ? profileHref : item.href
             const active = isActive(item.href)
+            const showBadge = item.href === '/notifications' && unreadCount > 0
             if (item.highlight) {
               return (
                 <Link key={item.href} href={href} className="flex flex-col items-center gap-0.5 -mt-5">
@@ -128,12 +139,17 @@ export function Navbar() {
                 key={item.href}
                 href={href}
                 className={cn(
-                  'flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-colors',
+                  'flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-colors relative',
                   active ? 'text-clutch-600' : 'text-gray-400'
                 )}
               >
                 <span className="text-xl">{item.icon}</span>
                 <span className="text-[10px] font-medium">{item.label}</span>
+                {showBadge && (
+                  <span className="absolute top-0 right-2 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
               </Link>
             )
           })}

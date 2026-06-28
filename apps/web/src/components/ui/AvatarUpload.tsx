@@ -2,7 +2,8 @@
 
 import { useRef, useState } from 'react'
 import { Avatar } from '@/components/ui/Avatar'
-import { uploadAvatar } from '@/lib/api/users'
+import { uploadProfileImage } from '@/lib/api/images'
+import { createClient } from '@/lib/supabase/client'
 
 interface AvatarUploadProps {
   currentSrc: string | null
@@ -34,16 +35,25 @@ export function AvatarUpload({ currentSrc, name, onUploaded }: AvatarUploadProps
 
     setPreviewSrc(URL.createObjectURL(file))
     setUploading(true)
-    const url = await uploadAvatar(file)
-    setUploading(false)
 
-    if (url) {
-      onUploaded(url)
-    } else {
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) throw new Error('Not authenticated')
+
+      const url = await uploadProfileImage(user.id, file)
+      if (url) {
+        onUploaded(url)
+      } else {
+        setError('Upload failed. Please try again.')
+        setPreviewSrc(null)
+      }
+    } catch (err) {
       setError('Upload failed. Please try again.')
       setPreviewSrc(null)
     }
 
+    setUploading(false)
     e.target.value = ''
   }
 
@@ -55,7 +65,7 @@ export function AvatarUpload({ currentSrc, name, onUploaded }: AvatarUploadProps
         className="relative group rounded-full"
         aria-label="Change profile photo"
       >
-        <Avatar src={previewSrc ?? currentSrc} name={name} size="xl" />
+        <Avatar src={previewSrc ?? currentSrc ?? undefined} name={name} size="xl" />
         <div className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
           <span className="opacity-0 group-hover:opacity-100 text-white text-xs font-medium transition-opacity">
             {uploading ? '◌' : 'Change'}

@@ -85,11 +85,14 @@ function SignupForm() {
 
     // Store referral code for later processing if email confirmation is required
     if (refCode) {
+      console.log('[Signup] Referral code present:', refCode)
       if (data.session) {
         // Process immediately if session exists (no email confirmation required)
+        console.log('[Signup] Session exists, processing referral immediately')
         await processReferral(refCode).catch(() => {})
       } else {
         // Store for post-login processing if email confirmation is required
+        console.log('[Signup] No session (email confirmation required), storing referral for later')
         localStorage.setItem('pending_referral', refCode)
       }
     }

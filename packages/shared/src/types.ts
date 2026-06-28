@@ -20,6 +20,19 @@ export type TaskStatus = 'open' | 'in_progress' | 'completed' | 'cancelled'
 
 export type ApplicationStatus = 'pending' | 'accepted' | 'rejected'
 
+export type NotificationType =
+  | 'new_application'
+  | 'application_accepted'
+  | 'application_rejected'
+  | 'new_message'
+  | 'task_completed'
+  | 'new_review'
+  | 'referral_bonus'
+
+export type ReportTargetType = 'task' | 'profile' | 'message' | 'review'
+export type ReportReason = 'spam' | 'harassment' | 'inappropriate_content' | 'scam' | 'other'
+export type ReportStatus = 'pending' | 'reviewed' | 'resolved' | 'dismissed'
+
 export interface GeoPoint {
   lat: number
   lng: number
@@ -29,6 +42,7 @@ export interface UserProfile {
   id: string
   name: string
   avatar_url: string | null
+  image_url: string | null
   bio: string | null
   neighborhood: string | null
   borough: string | null
@@ -62,6 +76,7 @@ export interface Task {
   status: TaskStatus
   applicant_count: number
   scheduled_for: string | null
+  image_url: string | null
   created_at: string
   updated_at: string
 }
@@ -114,5 +129,30 @@ export interface Conversation {
   participant_ids: string[]
   participants: UserProfile[]
   last_message: Message | null
+  created_at: string
+}
+
+export interface Notification {
+  id: string
+  user_id: string
+  type: NotificationType
+  title: string
+  message: string
+  data: Record<string, unknown> | null
+  read: boolean
+  created_at: string
+}
+
+export interface Report {
+  id: string
+  reporter_id: string
+  target_type: ReportTargetType
+  target_id: string
+  reason: ReportReason
+  description: string | null
+  status: ReportStatus
+  reviewed_by: string | null
+  reviewed_at: string | null
+  resolution_note: string | null
   created_at: string
 }

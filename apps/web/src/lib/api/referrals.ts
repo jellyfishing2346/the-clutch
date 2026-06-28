@@ -25,11 +25,19 @@ export async function fetchReferralCount(userId: string): Promise<number> {
 }
 
 export async function processReferral(referralCode: string): Promise<boolean> {
-  if (IS_DEMO) return true
+  if (IS_DEMO) {
+    console.log('[Referral] Demo mode: returning true for referral code', referralCode)
+    return true
+  }
   const supabase = createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return false
+  if (!user) {
+    console.log('[Referral] No authenticated user found')
+    return false
+  }
+
+  console.log('[Referral] Processing referral code', referralCode, 'for user', user.id)
 
   // Look up the referrer by their code
   const { data: referrer } = await supabase
@@ -38,14 +46,24 @@ export async function processReferral(referralCode: string): Promise<boolean> {
     .eq('referral_code', referralCode)
     .single()
 
-  if (!referrer || referrer.id === user.id) return false
+  if (!referrer || referrer.id === user.id) {
+    console.log('[Referral] Invalid referrer or self-referral', referrer?.id, user.id)
+    return false
+  }
+
+  console.log('[Referral] Found referrer', referrer.id)
 
   // Record the referral (unique constraint on referred_id prevents double-counting)
   const { error: refError } = await supabase
     .from('referrals')
     .insert({ referrer_id: referrer.id, referred_id: user.id })
 
-  if (refError) return false
+  if (refError) {
+    console.log('[Referral] Failed to record referral:', refError.message)
+    return false
+  }
+
+  console.log('[Referral] Referral recorded successfully')
 
   // Credit the referrer (+10 CR)
   const { error: referrerTxError } = await supabase.from('credits_transactions').insert({
@@ -54,10 +72,18 @@ export async function processReferral(referralCode: string): Promise<boolean> {
     type: 'bonus',
     description: 'Referral bonus — a neighbor joined with your link',
   })
-  if (referrerTxError) return false
+  if (referrerTxError) {
+    console.log('[Referral] Failed to create referrer credit transaction:', referrerTxError.message)
+    return false
+  }
 
   const { error: referrerCreditError } = await supabase.rpc('increment_credits', { user_id: referrer.id, amount: 10 })
-  if (referrerCreditError) return false
+  if (referrerCreditError) {
+    console.log('[Referral] Failed to increment referrer credits:', referrerCreditError.message)
+    return false
+  }
+
+  console.log('[Referral] Credited referrer +10 credits')
 
   // Credit the new user (+10 CR welcome referral bonus, on top of signup bonus)
   const { error: userTxError } = await supabase.from('credits_transactions').insert({
@@ -66,20 +92,37 @@ export async function processReferral(referralCode: string): Promise<boolean> {
     type: 'bonus',
     description: 'Joined via referral — welcome bonus',
   })
-  if (userTxError) return false
+  if (userTxError) {
+    console.log('[Referral] Failed to create user credit transaction:', userTxError.message)
+    return false
+  }
 
   const { error: userCreditError } = await supabase.rpc('increment_credits', { user_id: user.id, amount: 10 })
-  if (userCreditError) return false
+  if (userCreditError) {
+    console.log('[Referral] Failed to increment user credits:', userCreditError.message)
+    return false
+  }
+
+  console.log('[Referral] Credited new user +10 credits')
 
   const { error: profileError } = await supabase.from('profiles').update({ referred_by: referrer.id }).eq('id', user.id)
-  if (profileError) return false
+  if (profileError) {
+    console.log('[Referral] Failed to update profile with referred_by:', profileError.message)
+    return false
+  }
+
+  console.log('[Referral] Updated profile with referred_by')
 
   // Mark referral as credited
   const { error: creditError } = await supabase
     .from('referrals')
     .update({ credited_at: new Date().toISOString() })
     .eq('referred_id', user.id)
-  if (creditError) return false
+  if (creditError) {
+    console.log('[Referral] Failed to mark referral as credited:', creditError.message)
+    return false
+  }
 
+  console.log('[Referral] Referral processing completed successfully')
   return true
 }

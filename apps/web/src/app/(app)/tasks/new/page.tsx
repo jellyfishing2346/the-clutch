@@ -6,6 +6,7 @@ import { TASK_CATEGORIES, BOROUGHS, NEIGHBORHOODS, CREDITS_CONFIG } from 'shared
 import type { TaskCategory, PaymentType } from 'shared'
 import { createTask } from '@/lib/api/tasks'
 import { fetchCreditsBalance } from '@/lib/api/credits'
+import { uploadTaskImage } from '@/lib/api/images'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 
@@ -55,6 +56,10 @@ export default function NewTaskPage() {
   const [creditsBalance, setCreditsBalance] = useState<number | null>(null)
   const [aiLoading, setAiLoading] = useState(false)
   const [aiUsed, setAiUsed] = useState(false)
+  const [taskImage, setTaskImage] = useState<File | null>(null)
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const [imageError, setImageError] = useState('')
 
   const [form, setForm] = useState({
     title: '',
@@ -136,6 +141,17 @@ export default function NewTaskPage() {
       scheduledFor: form.scheduledFor || undefined,
     })
 
+    if (result && taskImage) {
+      setUploadingImage(true)
+      try {
+        await uploadTaskImage(result.id, taskImage)
+      } catch (err) {
+        console.error('Failed to upload task image:', err)
+        // Don't fail the whole task creation if image upload fails
+      }
+      setUploadingImage(false)
+    }
+
     if (result) {
       setPosted(true)
       setTimeout(() => router.push('/tasks'), 2000)
@@ -143,6 +159,30 @@ export default function NewTaskPage() {
       setSubmitError('Failed to post your task. Please try again.')
       setSubmitting(false)
     }
+  }
+
+  function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      setImageError('Please select an image file')
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setImageError('Image must be under 5MB')
+      return
+    }
+
+    setTaskImage(file)
+    setImagePreview(URL.createObjectURL(file))
+    setImageError('')
+  }
+
+  function handleRemoveImage() {
+    setTaskImage(null)
+    setImagePreview(null)
+    setImageError('')
   }
 
   if (posted) {
@@ -255,6 +295,50 @@ export default function NewTaskPage() {
                 maxLength={600}
               />
               <div className="text-right text-xs text-gray-400 mt-1">{form.description.length}/600</div>
+            </div>
+
+            <div>
+              <label className="label">Add a photo (optional)</label>
+              <div className="mt-2">
+                {imagePreview ? (
+                  <div className="relative inline-block">
+                    <img
+                      src={imagePreview}
+                      alt="Task preview"
+                      className="w-full h-48 object-cover rounded-xl border border-gray-200"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      className="absolute top-2 right-2 bg-white/90 hover:bg-white text-gray-600 hover:text-red-600 rounded-full p-2 shadow-md transition-colors"
+                      aria-label="Remove image"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center hover:border-clutch-300 transition-colors">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageSelect}
+                      className="hidden"
+                      id="task-image"
+                    />
+                    <label
+                      htmlFor="task-image"
+                      className="cursor-pointer flex flex-col items-center gap-2"
+                    >
+                      <span className="text-3xl">📷</span>
+                      <span className="text-sm text-gray-600">Click to add a photo</span>
+                      <span className="text-xs text-gray-400">JPEG, PNG, WebP up to 5MB</span>
+                    </label>
+                  </div>
+                )}
+                {imageError && (
+                  <p className="text-sm text-red-600 mt-2">{imageError}</p>
+                )}
+              </div>
             </div>
 
             {selectedCategory && (

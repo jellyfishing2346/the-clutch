@@ -10,6 +10,7 @@ import { ReviewForm } from '@/components/ui/ReviewForm'
 import { fetchTaskById, applyToTask, fetchApplications, acceptApplication, rejectApplication, completeTask, cancelTask } from '@/lib/api/tasks'
 import { fetchReviews, fetchHelpersBySkills } from '@/lib/api/users'
 import { fetchMyReviewForTask } from '@/lib/api/reviews'
+import { createReport } from '@/lib/api/reports'
 import { formatRelativeTime } from '@/lib/utils'
 import { TASK_CATEGORIES, TRUST_LEVELS, SUPPORTED_LANGUAGES, SKILLS } from 'shared'
 import type { Task, Review, UserProfile, TaskApplication } from 'shared'
@@ -30,6 +31,10 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [actionError, setActionError] = useState('')
   const [myReview, setMyReview] = useState<Review | null>(null)
+  const [showReportModal, setShowReportModal] = useState(false)
+  const [reportReason, setReportReason] = useState('')
+  const [reportDescription, setReportDescription] = useState('')
+  const [reporting, setReporting] = useState(false)
 
   useEffect(() => {
     createClient().auth.getUser().then(({ data: { user } }) => {
@@ -115,6 +120,24 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
       setActionError('Failed to cancel this task. Please try again.')
     }
     setActionLoading(null)
+  }
+
+  async function handleReportSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!task || !reportReason) return
+
+    setReporting(true)
+    const result = await createReport('task', task.id, reportReason as any, reportDescription || undefined)
+    setReporting(false)
+
+    if (result) {
+      setShowReportModal(false)
+      setReportReason('')
+      setReportDescription('')
+      alert('Report submitted. Thank you for helping keep our community safe.')
+    } else {
+      alert('Failed to submit report. Please try again.')
+    }
   }
 
   if (loading) {
@@ -209,6 +232,15 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
                 <span className="text-red-500 font-medium">✕ Cancelled</span>
               )}
             </div>
+
+            {currentUserId && !isCreator && (
+              <button
+                onClick={() => setShowReportModal(true)}
+                className="text-xs text-gray-400 hover:text-red-500 transition-colors mt-2"
+              >
+                🚩 Report this task
+              </button>
+            )}
 
             {isCreator && (task.status === 'open' || task.status === 'in_progress') && (
               <div className="mt-4 pt-4 border-t border-gray-50">
@@ -498,6 +530,75 @@ export default function TaskDetailPage({ params }: { params: Promise<{ id: strin
           )}
         </aside>
       </div>
+
+      {/* Report modal */}
+      {showReportModal && (
+        <div
+          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
+          onClick={e => { if (e.target === e.currentTarget) setShowReportModal(false) }}
+        >
+          <div className="card w-full max-w-md p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold text-gray-900">Report this task</h2>
+              <button
+                onClick={() => setShowReportModal(false)}
+                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleReportSubmit} className="space-y-4">
+              <div>
+                <label className="label">Reason</label>
+                <select
+                  className="input"
+                  value={reportReason}
+                  onChange={e => setReportReason(e.target.value)}
+                  required
+                >
+                  <option value="">Select a reason...</option>
+                  <option value="spam">Spam or misleading</option>
+                  <option value="harassment">Harassment</option>
+                  <option value="inappropriate_content">Inappropriate content</option>
+                  <option value="scam">Scam or fraud</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="label">Description (optional)</label>
+                <textarea
+                  className="input resize-none min-h-[80px]"
+                  placeholder="Please provide more details..."
+                  value={reportDescription}
+                  onChange={e => setReportDescription(e.target.value)}
+                  maxLength={500}
+                />
+                <div className="text-right text-xs text-gray-400 mt-1">{reportDescription.length}/500</div>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowReportModal(false)}
+                  className="btn-secondary flex-1"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="btn-primary flex-1"
+                  disabled={reporting || !reportReason}
+                >
+                  {reporting ? 'Submitting...' : 'Submit report'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

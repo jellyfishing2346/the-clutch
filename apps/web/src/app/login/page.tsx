@@ -43,6 +43,7 @@ export default function LoginPage() {
     // Process pending referral if user signed up with a referral link but required email confirmation
     const pendingReferral = localStorage.getItem('pending_referral')
     if (pendingReferral) {
+      console.log('[Login] Processing pending referral:', pendingReferral)
       await processReferral(pendingReferral).catch(() => {})
       localStorage.removeItem('pending_referral')
     }

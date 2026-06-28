@@ -135,7 +135,7 @@ export default function ProfilePage({ params }: { params: Promise<{ id: string }
 }
 
   function handleAvatarUploaded(url: string) {
-    setUser(prev => prev ? { ...prev, avatar_url: url } : prev)
+    setUser(prev => prev ? { ...prev, image_url: url } : prev)
   }
 
   if (loading) {
