@@ -65,7 +65,7 @@ export function AvatarUpload({ currentSrc, name, onUploaded }: AvatarUploadProps
         className="relative group rounded-full"
         aria-label="Change profile photo"
       >
-        <Avatar src={previewSrc ?? currentSrc ?? undefined} name={name} size="xl" />
+        <Avatar src={previewSrc ?? currentSrc ?? null} name={name} size="xl" />
         <div className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center">
           <span className="opacity-0 group-hover:opacity-100 text-white text-xs font-medium transition-opacity">
             {uploading ? '◌' : 'Change'}
