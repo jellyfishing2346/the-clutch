@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { fetchNotifications, fetchUnreadCount, markAsRead, markAllAsRead, type Notification } from '@/lib/api/notifications'
+import { fetchNotifications, fetchUnreadCount, markAsRead, markAllAsRead } from '@/lib/api/notifications'
 import { formatRelativeTime } from '@/lib/utils'
+import type { Notification } from 'shared'
 
 const NOTIFICATION_ICONS: Record<string, string> = {
   new_application: '👋',
