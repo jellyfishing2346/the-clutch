@@ -1,7 +1,6 @@
-import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest, NextResponse } from 'next/server'
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+const GROQ_API_KEY = process.env.GROQ_API_KEY
 
 const CATEGORIES = [
   'simple_help', 'errands', 'delivery', 'moving', 'cleaning',
@@ -16,7 +15,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 }
 
 export async function POST(req: NextRequest) {
-  if (!process.env.ANTHROPIC_API_KEY) {
+  if (!GROQ_API_KEY) {
     return NextResponse.json({ error: 'AI not configured' }, { status: 503 })
   }
 
@@ -25,12 +24,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Title required' }, { status: 400 })
   }
 
-  const message = await client.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 400,
-    messages: [{
-      role: 'user',
-      content: `You are helping someone post a task on clutch, a hyperlocal NYC community task marketplace.
+  try {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{
+          role: 'user',
+          content: `You are helping someone post a task on clutch, a hyperlocal NYC community task marketplace.
 
 Task title: "${title}"
 Location: ${neighborhood ?? 'NYC'}${borough ? `, ${borough}` : ''}
@@ -47,18 +52,31 @@ And suggest a fair credit amount (5–30) based on effort:
 
 Respond ONLY with valid JSON in this exact shape:
 {"description": "...", "category": "...", "credits": 10}`,
-    }],
-  })
+        }],
+        max_tokens: 400,
+      }),
+    })
 
-  const text = message.content[0].type === 'text' ? message.content[0].text : ''
-  const jsonMatch = text.match(/\{[\s\S]*\}/)
-  if (!jsonMatch) {
-    return NextResponse.json({ error: 'Could not parse AI response' }, { status: 500 })
+    if (!response.ok) {
+      const error = await response.text()
+      console.error('Groq API error:', error)
+      return NextResponse.json({ error: 'AI service error' }, { status: 500 })
+    }
+
+    const data = await response.json()
+    const text = data.choices?.[0]?.message?.content || ''
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) {
+      return NextResponse.json({ error: 'Could not parse AI response' }, { status: 500 })
+    }
+
+    const result = JSON.parse(jsonMatch[0])
+    if (!CATEGORIES.includes(result.category)) result.category = 'other'
+    result.categoryLabel = CATEGORY_LABELS[result.category]
+
+    return NextResponse.json(result)
+  } catch (error) {
+    console.error('Groq request error:', error)
+    return NextResponse.json({ error: 'AI service unavailable' }, { status: 500 })
   }
-
-  const result = JSON.parse(jsonMatch[0])
-  if (!CATEGORIES.includes(result.category)) result.category = 'other'
-  result.categoryLabel = CATEGORY_LABELS[result.category]
-
-  return NextResponse.json(result)
 }

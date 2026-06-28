@@ -2,16 +2,18 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-const PUBLIC_PATHS = new Set(['/', '/login', '/signup', '/tasks'])
+const PUBLIC_PATHS = new Set(['/', '/login', '/signup', '/tasks', '/api/ai/chat', '/api/ai/suggest-task'])
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
 const IS_DEMO = !SUPABASE_URL || SUPABASE_URL.includes('your-project')
 
 // /tasks and /tasks/[id] are public (browsing), but /tasks/new requires
 // auth (posting a task) — this stays gated even though it's under /tasks.
+// API routes for AI features are also public.
 function isPublicPath(pathname: string): boolean {
   if (PUBLIC_PATHS.has(pathname)) return true
   if (pathname.startsWith('/tasks/') && pathname !== '/tasks/new') return true
+  if (pathname.startsWith('/api/ai/')) return true
   return false
 }
 
