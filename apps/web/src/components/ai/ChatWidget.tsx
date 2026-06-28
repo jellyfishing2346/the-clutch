@@ -45,13 +45,20 @@ export function ChatWidget() {
     setLoading(true)
 
     try {
+      console.log('Sending request to /api/ai/chat with messages:', next)
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: next }),
       })
 
-      if (!res.ok || !res.body) throw new Error('failed')
+      console.log('Response status:', res.status, 'ok:', res.ok)
+
+      if (!res.ok || !res.body) {
+        const errorText = await res.text()
+        console.error('API error response:', errorText)
+        throw new Error('failed')
+      }
 
       const reader = res.body.getReader()
       const decoder = new TextDecoder()
@@ -62,12 +69,15 @@ export function ChatWidget() {
         const { done, value } = await reader.read()
         if (done) break
         reply += decoder.decode(value, { stream: true })
+        console.log('Stream chunk received, current reply:', reply)
         setMessages(prev => [
           ...prev.slice(0, -1),
           { role: 'assistant', content: reply },
         ])
       }
-    } catch {
+      console.log('Stream completed successfully')
+    } catch (error) {
+      console.error('Chat widget error:', error)
       setMessages(prev => [
         ...prev,
         { role: 'assistant', content: "Sorry, I'm having trouble connecting right now. Try emailing hello@clutch.nyc for help." },

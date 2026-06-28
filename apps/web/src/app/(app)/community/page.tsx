@@ -131,7 +131,7 @@ const CENTERS = [
     address: '150 Elizabeth St, New York, NY 10012',
     services: ['Youth development', 'Elder care', 'Job training', 'Immigration services'],
     description: 'The largest social services agency serving Asian Americans and immigrant communities in the US.',
-    website: 'cpc-nyc.org',
+    website: 'https://cpc-nyc.org',
   },
   {
     id: 4,
@@ -153,7 +153,7 @@ const CENTERS = [
     address: '55 Exchange Pl, New York, NY 10005',
     services: ['Education', 'Health services', 'Immigration advocacy', 'Economic empowerment'],
     description: 'A leading Latino nonprofit supporting families across the Northeast with education, health, and advocacy.',
-    website: 'hispanicfederation.org',
+    website: 'https://hispanicfederation.org',
   },
   {
     "id": 6,
@@ -180,7 +180,7 @@ const CENTERS = [
     address: '98-86 97th Ave, Ozone Park, NY 11416',
     services: ['Domestic violence support', 'Immigration aid', 'Food pantry', 'Legal help'],
     description: 'Serving South Asian immigrants with essential social services and culturally sensitive support.',
-    website: 'sacssny.org',
+    website: 'https://sacssny.org',
   },
   {
     id: 8,
@@ -191,7 +191,7 @@ const CENTERS = [
     address: '120 E 125th St, New York, NY 10035',
     services: ['Cultural programming', 'Arts education', 'Heritage preservation', 'Community events'],
     description: 'Celebrating and preserving the cultural traditions of African and Caribbean heritage throughout the diaspora.',
-    website: 'cccadi.org',
+    website: 'https://cccadi.org',
   },
   {
     id: 9,
@@ -408,7 +408,7 @@ export default function CommunityPage() {
                 <span className="text-[11px] text-gray-400">{center.address}</span>
                 {center.website && (
                   <a
-                    href={`https://${center.website}`}
+                    href={center.website.startsWith('http') ? center.website : `https://${center.website}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-[11px] font-semibold text-clutch-600 hover:text-clutch-700 shrink-0 ml-2"
